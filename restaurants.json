@@ -1,0 +1,20 @@
+{
+  "menu": {
+    "menuItems": [
+      {
+        "name": "Margherita Pizza",
+        "description": "Classic pizza with fresh mozzarella, basil, and tomato sauce.",
+        "price": "15.00",
+        "rating": 4,
+        "image": "https://example.com/images/margherita.jpg"
+      },
+      {
+        "name": "Pepperoni Pizza",
+        "description": "Delicious pizza topped with savory pepperoni slices.",
+        "price": "17.00",
+        "rating": 5,
+        "image": "https://example.com/images/pepperoni.jpg"
+      }
+    ]
+  }
+}

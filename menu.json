@@ -1,0 +1,112 @@
+{
+  "item": {
+    "item": {
+      "menu": {
+        "menuItems": [
+          {
+            "id": 1,
+            "name": "Pancakes",
+            "description": "Fluffy pancakes served with syrup and butter.",
+            "price": "50",
+            "image": "https://example.com/images/omelette.jpg",
+            "rating": 4
+          },
+          {
+            "id": 2,
+            "name": "Omelette",
+            "description": "A hearty omelette with cheese, tomatoes, and spinach.",
+            "price": "50",
+            "image": "https://example.com/images/omelette.jpg",
+            "rating": 5
+          },
+          {
+            "id": 3,
+            "name": "Steak",
+            "description": "Juicy steak cooked to perfection with a side of fries.",
+            "price": 70,
+            "image": "https://example.com/images/steak.jpg",
+            "rating": 5
+          },
+          {
+            "id": 4,
+            "name": "Margherita Pizza",
+            "description": "Classic Margherita pizza with fresh tomatoes, basil, and mozzarella.",
+            "price": 35,
+            "image": "https://example.com/images/margherita-pizza.jpg",
+            "rating": 5
+          },
+          {
+            "id": 5,
+            "name": "Caesar Salad",
+            "description": "Fresh Romaine lettuce with Caesar dressing, croutons, and Parmesan cheese.",
+            "price": 15,
+            "image": "https://example.com/images/caesar-salad.jpg",
+            "rating": 4
+          },
+          {
+            "id": 6,
+            "name": "Garlic Bread",
+            "description": "Toasted bread with garlic butter and parsley.",
+            "price": 10,
+            "image": "https://example.com/images/garlic-bread.jpg",
+            "rating": 4
+          },
+          {
+            "id": 7,
+            "name": "Spaghetti Carbonara",
+            "description": "Classic Italian pasta dish with pancetta, egg, and Parmesan.",
+            "price": 45,
+            "image": "https://example.com/images/carbonara.jpg",
+            "rating": 5
+          },
+          {
+            "id": 8,
+            "name": "Chocolate Lava Cake",
+            "description": "Rich chocolate cake with a molten chocolate center.",
+            "price": 30,
+            "image": "https://example.com/images/lava-cake.jpg",
+            "rating": 5
+          },
+          {
+            "id": 9,
+            "name": "Tiramisu",
+            "description": "Traditional Italian dessert with layers of mascarpone and coffee-soaked ladyfingers.",
+            "price": 35,
+            "image": "https://example.com/images/tiramisu.jpg",
+            "rating": 5
+          },
+          {
+            "id": 10,
+            "name": "Lasagna",
+            "description": "Layered pasta with rich meat sauce, béchamel, and melted cheese.",
+            "price": 50,
+            "image": "https://example.com/images/lasagna.jpg",
+            "rating": 5
+          },
+          {
+            "id": 11,
+            "name": "Doro Wot",
+            "description": "A flavorful Ethiopian chicken stew with a rich and spicy sauce.",
+            "price": 100,
+            "image": "https://example.com/images/doro-wot.jpg",
+            "rating": 5
+          },
+          {
+            "id": 12,
+            "name": "Chechebsa",
+            "description": "Traditional Ethiopian breakfast made with fried flatbread and spices.",
+            "price": 20,
+            "image": "https://example.com/images/chechebsa.jpg",
+            "rating": 4
+          },
+          {
+            "name": "tibssss",
+            "description": "yum",
+            "price": "40",
+            "image": ""
+          }
+        ]
+      }
+    }
+  }
+}

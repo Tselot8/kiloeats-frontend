@@ -1,0 +1,22 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "items": ["Pizza", "Burger"],
+      "totalPrice": 45.99,
+      "status": "Pending"
+    },
+    {
+      "id": 2,
+      "items": ["Pasta", "Salad"],
+      "totalPrice": 30.5,
+      "status": "Pending"
+    },
+    {
+      "id": 3,
+      "items": ["Sushi", "Ramen"],
+      "totalPrice": 60.0,
+      "status": "Pending"
+    }
+  ]
+}

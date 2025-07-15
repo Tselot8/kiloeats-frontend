@@ -1,0 +1,355 @@
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.app {
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  color: #fff;
+  box-sizing: border-box;
+  font-size: 20px;
+}
+
+.container {
+  display: flex;
+}
+
+.container1 {
+  display: flex;
+  margin-left: 12%;
+}
+
+.container3 {
+    display: flex;
+    justify-content:space-around;
+    gap: 50%;
+}
+
+.main-header, .main-footer {
+  position: relative;
+  font-weight: 700;
+  color: white;
+  z-index: 1;
+  overflow: hidden;
+  background-color: #2b767e;
+  padding-top:2%;
+}
+
+.main-title {
+    margin-left: 5.5%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 2% 12%;
+  color: #fff;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 40px;
+}
+
+header nav {
+  padding-left: 10%;
+  opacity: 10px;
+}
+
+header nav a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #fff;
+  padding: 3%;
+}
+
+header nav a:hover {
+  color: #013237;
+}
+
+main {
+  background-image: url(./assets/bg4.png);
+  color: #fff;
+  flex-grow: 1;
+}
+
+main h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 10%;
+  margin: 0;
+}
+
+.edit-page {
+  padding: 0 15%;
+}
+
+.edit-menu, .back-to-menu, .form-button, .addFood, .removeFood, .orders-back-to-menu, .combo, .accept-order, .deny-order, .edit-profile-button, .cancel-profile-edit, .order-ready, .edit-form, .submit-button, .close-modal {
+  background-color: #2b767e;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 20px;
+}
+
+.form-button {
+    margin-bottom: 3%;
+}
+
+.removeFood {
+    width: 50%;
+    height: 10%;
+    margin-right: 5%;
+}
+
+.addFood {
+    width: 3%;
+    height: 60%;
+}
+
+.edit-menu, .back-to-menu {
+  margin-left: 50%;
+  width: 150%;
+}
+
+.back-to-menu {
+    margin-top: 15%;
+    width: 120%;
+}
+
+.orders-back-to-menu {
+    margin-top: 15%;
+}
+
+.addFood {
+  margin-left: 70%;
+  padding: 5px 10px;
+  font-size: 20px;
+}
+
+.removeFood {
+  padding: 10px;
+  font-size: 24px;
+}
+
+.edit-form, .combo {
+  padding: 1%;
+  font-size: 18px;
+}
+
+.close-modal {
+  background-color: #a52a2a;
+}
+
+.close-modal:hover {
+  background-color: #8b0000;
+}
+
+.accept-order, .order-ready {
+    margin-right: 5%;
+}
+.edit-your-menu {
+  margin-right: 30%;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  margin: 2% 15%;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  color: #fff;
+}
+
+.menu-item img {
+  width: 12%;
+  border-radius: 3%;
+  object-fit: cover;
+  margin-left: 1%;
+}
+
+.item-details {
+  flex-grow: 1;
+  margin-left: 10px;
+}
+
+.item-details h4 {
+  margin: 0;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+}
+
+.item-actions span {
+  margin-right: 10px;
+}
+
+.form {
+  width: 100%;
+  padding: 1%;
+  background-color: #fff;
+  border: 2px solid #013237;
+  border-radius: 10px;
+  color: #000;
+}
+
+h2 {
+  padding: 2% 0 2% 10%;
+}
+
+.price {
+  background-color: rgba(255, 255, 255, 0);
+  padding-right: 2%;
+  color: #fff;
+}
+
+footer {
+  padding: 20px;
+  background-color: #444365;
+  color: #fff;
+  font-size: 30px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto
+}
+
+.about-us {
+  flex: 1;
+}
+
+.about-us h3 {
+  margin: 0 0 10px;
+}
+
+.about-us p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.contact-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.social-links {
+  flex: 1;
+  text-align: right;
+}
+
+.social-links a {
+  margin: 0 10px;
+  color: #013237;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.social-links a:hover {
+  color: #02585f;
+}
+
+.profile-edit {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  width: 30%;
+  margin: 0 0 2% 30%;
+  padding: 2% 5% 2% 5%;
+  color: #fff;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 2%;
+  width: 30%;
+  text-align: center;
+  color: #fff;
+}
+
+.modal input {
+  width: 90%;
+  padding: 8px;
+  margin: 6px 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.order-card {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 2% 5%;
+  margin: 2%;
+  margin-left: 17%;
+  color: #fff;
+  width: 60%;
+  text-align: center;
+}
+
+.orders-page {
+  padding: 0 12%;
+  background-color: transparent !important;
+}
+
+.profile-title {
+  margin-left: 15%;
+  margin-bottom:-2%;
+}
+
+
+.upload-label {
+  display: block;
+  margin: 8px 0 8px 1%;
+}
+
+.success-text {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+  margin-left: 15%;
+}
