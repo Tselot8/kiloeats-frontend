@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://kilo-eats-backend-production.up.railway.app';
+export const BASE_URL = 'https://kilo-eats-backend.onrender.com';
 
 export const fetchMenuData = async () => {
   try {
