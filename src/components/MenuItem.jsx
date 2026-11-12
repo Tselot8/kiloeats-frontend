@@ -1,4 +1,3 @@
-import React from "react";
 import "../App.css";
 
 const MenuItem = ({ items, onRemoveFood }) => (
@@ -29,5 +28,20 @@ const MenuItem = ({ items, onRemoveFood }) => (
     )}
   </div>
 );
+
+MenuItem.propTypes = {
+  items({ items }) {
+    if (!Array.isArray(items)) {
+      return new Error("MenuItem requires an items array.");
+    }
+    return null;
+  },
+  onRemoveFood({ onRemoveFood }) {
+    if (typeof onRemoveFood !== "function") {
+      return new Error("MenuItem requires an onRemoveFood function.");
+    }
+    return null;
+  },
+};
 
 export default MenuItem;
