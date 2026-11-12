@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:menu": "node --test tests/menu-api.test.js"
+    "test:menu": "node --test tests/menu-api.test.js",
+    "test:orders": "node --test tests/orders-api.test.js"
   },
   "dependencies": {
     "json-server": "^1.0.0-beta.3",

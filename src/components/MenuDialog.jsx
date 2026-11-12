@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 
-const MenuDialog = ({ title, children, onDismiss, busy }) => {
+const MenuDialog = ({ title, children, onDismiss, busy, fallbackFocusSelector = ".addFood, .back-to-menu" }) => {
   const dialogRef = useRef(null);
   const titleId = useId();
 
@@ -15,9 +15,9 @@ const MenuDialog = ({ title, children, onDismiss, busy }) => {
       dialog.close();
       document.body.style.overflow = previousOverflow;
       if (opener?.isConnected) opener.focus();
-      else document.querySelector(".addFood, .back-to-menu")?.focus();
+      else document.querySelector(fallbackFocusSelector)?.focus();
     };
-  }, []);
+  }, [fallbackFocusSelector]);
 
   useEffect(() => {
     if (busy) dialogRef.current?.focus();
@@ -56,6 +56,7 @@ MenuDialog.propTypes = {
   children: (props) => props.children == null ? new Error("MenuDialog requires content.") : null,
   onDismiss: (props) => typeof props.onDismiss !== "function" ? new Error("MenuDialog requires onDismiss.") : null,
   busy: (props) => typeof props.busy !== "boolean" ? new Error("MenuDialog requires a busy state.") : null,
+  fallbackFocusSelector: (props) => props.fallbackFocusSelector != null && typeof props.fallbackFocusSelector !== "string" ? new Error("MenuDialog fallback focus selector must be a string.") : null,
 };
 
 export default MenuDialog;

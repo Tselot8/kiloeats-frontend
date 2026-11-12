@@ -1,4 +1,5 @@
 import { hasUniqueMenuId, menuItemId } from './menu.js';
+import { canChangeOrderStatus, orderKey, parseOrders } from './orders.js';
 
 export const BASE_URL = 'https://kilo-eats-backend.onrender.com';
 
@@ -92,17 +93,53 @@ export const fetchRestaurantProfile = async () => {
   }
 };
 
-export const fetchOrders = async () => {
-  try {
-    const response = await fetch(`${BASE_URL}/orders`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch orders");
-    }
-    const data = await response.json();
-    console.log("Raw orders data:", data); // Debug log
-    return data.orders || [];
-  } catch (error) {
-    console.error("Error fetching orders:", error);
-    return [];
+export const fetchOrders = async ({ signal } = {}) => {
+  const timeout = AbortSignal.timeout(20000);
+  const response = await fetch(`${BASE_URL}/orders`, {
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Could not load orders (HTTP ${response.status}). Please try again.`);
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error('The order service returned an unreadable orders list. Please refresh orders.'); }
+  return parseOrders(data);
+};
+
+const mutateOrder = async (order, nextStatus, { deleting = false } = {}) => {
+  const key = orderKey(order?.id);
+  if (key === null || (deleting ? order.status !== 'Accepted' : !canChangeOrderStatus(order.status, nextStatus))) {
+    throw new Error('This action is unavailable for the current order status. Please refresh orders.');
   }
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/orders/${encodeURIComponent(key)}`, {
+      method: deleting ? 'DELETE' : 'PATCH',
+      ...(deleting ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: nextStatus }) }),
+      signal: AbortSignal.timeout(20000),
+    });
+  } catch {
+    throw new Error('Could not confirm this action. The service may have received it. Refresh orders before trying again.');
+  }
+  if (!response.ok) throw new Error(`The order action failed (HTTP ${response.status}). No change has been confirmed.`);
+
+  // Keep the existing write contract without assuming a mutation response shape.
+  // Verify the result through the documented orders-list response instead.
+  let orders;
+  try { orders = await fetchOrders(); }
+  catch { throw new Error('The service accepted the request, but its result could not be confirmed. Refresh orders before trying again.'); }
+  const updated = orders.find((entry) => orderKey(entry.id) === key);
+  if (deleting ? updated !== undefined : !updated || updated.status !== nextStatus) {
+    throw new Error('The service has not confirmed the expected order change. Refresh orders before trying again.');
+  }
+  return updated;
+};
+
+export const changeOrderStatus = (order, status) => mutateOrder(order, status);
+export const deleteOrder = (order) => mutateOrder(order, undefined, { deleting: true });
+
+export const orderErrorMessage = (error) => {
+  if (error?.name === 'TimeoutError') return 'The order service took too long to respond. Please try again.';
+  if (error instanceof TypeError) return 'The order service could not be reached. Check your connection and try again.';
+  return error?.message || 'The order request failed. Please try again.';
 };

@@ -1,135 +1,63 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import "../App.css";
-import { BASE_URL } from "../utils/api";
+import { useOrders } from "../hooks/useOrders.js";
+import { orderKey } from "../utils/orders.js";
+import MenuDialog from "./MenuDialog.jsx";
+import OrderCard from "./OrderCard.jsx";
 
 const OrdersPage = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${BASE_URL}/orders`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch orders");
-        }
-        const data = await response.json();
-        console.log("Fetched orders:", data);
-        setOrders(data.orders || []);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
-  }, []);
-
-  const updateOrderStatus = async (orderId, status) => {
-    try {
-      const response = await fetch(`${BASE_URL}/orders/${orderId.toString()}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update order status on the server");
-      }
-
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status } : order
-        )
-      );
-    } catch (error) {
-      console.error("Error updating order status:", error);
-    }
-  };
-
-  const deleteOrder = async (orderId) => {
-    try {
-      const response = await fetch(`${BASE_URL}/orders/${orderId.toString()}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete order from the server");
-      }
-
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order.id !== orderId)
-      );
-    } catch (error) {
-      console.error("Error deleting order:", error);
-    }
+  const { orders, loading, loadError, reload, feedback, announcement, perform } = useOrders();
+  const [confirmation, setConfirmation] = useState(null);
+  const hasPendingAction = Object.values(feedback).some((entry) => entry.pending);
+  const feedbackFor = (order) => Object.hasOwn(feedback, orderKey(order.id)) ? feedback[orderKey(order.id)] : undefined;
+  const confirmationFeedback = confirmation ? feedbackFor(confirmation.order) || {} : {};
+  const dismiss = () => { if (!confirmationFeedback.pending) setConfirmation(null); };
+  const confirm = async () => {
+    if (await perform(confirmation.order, confirmation.action)) setConfirmation(null);
   };
 
   return (
-    <div className="orders-page">
-      <header>
-        <div className="container3">
-          <h2 className="main-title">Orders</h2>
-          <Link to="/" className="button-link button-secondary orders-back-to-menu">Back to Menu</Link>
+    <section className="orders-page" aria-labelledby="orders-heading">
+      <div className="page-header">
+        <div>
+          <h2 id="orders-heading">Orders</h2>
+          <p className="menu-helper">Review incoming orders and manage food preparation.</p>
         </div>
-      </header>
-      <div>
-        {loading ? (
-          <p>Loading orders...</p>
-        ) : orders.length > 0 ? (
-          orders.map((order) => (
-            <div key={order.id} className="order-card">
-              <h3>Order {order.id}</h3>
-              <p>Items: {order.items.join(", ")}</p>
-              <p>Total Price: {order.totalPrice} Br.</p>
-              <p>Status: {order.status}</p>
-              <div className="order-buttons">
-                {order.status === "Accepted" ? (
-                  <>
-                    <button
-                      className="order-ready"
-                      onClick={() => updateOrderStatus(order.id, "Done")}
-                    >
-                      Order Ready
-                    </button>
-                    <button
-                      className="deny-order"
-                      onClick={() => deleteOrder(order.id)}
-                    >
-                      Delete Order
-                    </button>
-                  </>
-                ) : order.status === "Declined" ? (
-                  <p className="declined-text">Declined</p>
-                ) : order.status === "Done" ? (
-                  <p>Order is Done</p>
-                ) : (
-                  <>
-                    <button
-                      className="accept-order"
-                      onClick={() => updateOrderStatus(order.id, "Accepted")}
-                    >
-                      Accept Order
-                    </button>
-                    <button
-                      className="deny-order"
-                      onClick={() => updateOrderStatus(order.id, "Declined")}
-                    >
-                      Deny Order
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p>No orders available at the moment.</p>
-        )}
+        <div className="orders-page-actions">
+          <Link to="/" className="button-link button-secondary orders-back-to-menu">Back to Menu</Link>
+          <button id="orders-refresh" className="button-secondary" onClick={reload} disabled={loading || hasPendingAction}>{loading ? "Loading…" : "Refresh orders"}</button>
+        </div>
       </div>
-    </div>
+      <p className="orders-readiness-note">Ready refers to food preparation.</p>
+      <p className="orders-announcement" role="status">{announcement}</p>
+      {loading && <p className="menu-state" role="status">{orders.length ? "Refreshing orders…" : "Loading orders…"}</p>}
+      {loadError && <div className="menu-feedback menu-feedback-error" role="alert">
+        <p>{loadError}</p>
+        {orders.length > 0 && <p>Showing the last loaded orders.</p>}
+        <button className="button-secondary" onClick={reload} disabled={loading || hasPendingAction}>Retry loading orders</button>
+      </div>}
+      {!loading && !loadError && orders.length === 0 && <div className="menu-state orders-empty"><h3>No orders available</h3><p>There are no orders in the current list. Refresh to check again.</p></div>}
+      <div className="orders-list">
+        {orders.map((order) => <OrderCard key={orderKey(order.id)} order={order} feedback={feedbackFor(order)} disabled={loading} onAction={perform} onConfirm={(selected, action) => setConfirmation({ order: selected, action })} />)}
+      </div>
+      {confirmation && (
+        <MenuDialog title={`${confirmation.action === "delete" ? "Delete" : "Decline"} order #${confirmation.order.id}?`} busy={Boolean(confirmationFeedback.pending)} onDismiss={dismiss} fallbackFocusSelector="#orders-refresh">
+          <div className="orders-confirmation">
+            <p>{confirmation.action === "delete"
+              ? "Delete this order record? It will be removed from your orders list and cannot be restored here."
+              : "Decline this order? You cannot accept it afterward from this screen."}</p>
+            {confirmationFeedback.error && <p className="menu-feedback menu-feedback-error" role="alert">{confirmationFeedback.error}</p>}
+            <div className="menu-form-actions">
+              <button type="button" className="button-secondary" data-initial-focus disabled={Boolean(confirmationFeedback.pending)} onClick={dismiss}>Keep order</button>
+              <button type="button" className="button-danger" disabled={Boolean(confirmationFeedback.pending)} onClick={confirm}>{confirmationFeedback.pending
+                ? confirmation.action === "delete" ? "Deleting…" : "Declining…"
+                : confirmation.action === "delete" ? "Delete order" : "Decline order"}</button>
+            </div>
+            <p className="order-operation-status" role="status">{confirmationFeedback.pending ? confirmationFeedback.message : ""}</p>
+          </div>
+        </MenuDialog>
+      )}
+    </section>
   );
 };
 

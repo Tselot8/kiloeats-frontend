@@ -35,6 +35,7 @@ separate backend startup are required to start the frontend itself.
 | `npm run build` | Build production assets into `dist/`. |
 | `npm run lint` | Check JavaScript and JSX with ESLint. |
 | `npm run test:menu` | Run isolated menu API and validation regression tests with Node's built-in test runner. No live requests are made. |
+| `npm run test:orders` | Run isolated order parsing, transition, mutation, and read-back regression tests. No live requests are made. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -47,7 +48,7 @@ routes so direct links and refreshes work.
 | --- | --- |
 | `/` | Menu cards, add-food dialog, and confirmed removal. |
 | `/edit-menu` | Select and edit a menu item by ID; card links preselect it with `?item=<id>`. |
-| `/orders` | Incoming orders with accept, decline, ready, and delete actions. |
+| `/orders` | Incoming orders, preparation status, accept/ready actions, and confirmed decline/deletion. |
 | `/profile` | Restaurant profile and edit dialog. |
 | `/signup` | Incomplete customer/restaurant-owner signup form. |
 | `/restaurant/:restaurantId` | Placeholder displaying the restaurant ID, for example `/restaurant/1`. |
@@ -73,10 +74,10 @@ restaurant placeholder directly by URL.
 - Signup also validates a password-confirmation value without rendering its
   input, so valid-password submissions cannot pass that check. The login
   button has no action. Authentication and route protection are not implemented.
-- Menu reads now surface HTTP, connection, timeout, and malformed-response
-  errors with a retry action. Order/profile helpers still fall back to empty
-  arrays/objects on some failures; no orders or `N/A` profile fields do not
-  establish that the backend has no data.
+- Menu and order reads surface HTTP, connection, timeout, and malformed-response
+  errors with a retry action. The profile helper still falls back to an empty
+  object on some failures; `N/A` profile fields do not establish that the
+  backend has no data.
 - The root JSON files are sample data, not automatically loaded fallbacks.
   Although `json-server` is declared, no script launches it, and `server.js`
   is empty. No backend, database, or authentication server runs with Vite.
@@ -116,3 +117,50 @@ restaurant placeholder directly by URL.
 - Automated API tests mock all requests. Browser add/edit/remove success,
   failure, and duplicate-submission checks use intercepted requests and isolated
   fixture state. Live verification is read-only; no test mutates the live menu.
+
+## Order management and remaining service constraints
+
+- The existing read contract is `GET /orders` returning `{ orders: [...] }`.
+  Each record must have a unique string/integer `id`, an `items` array of food
+  name strings, a finite non-negative numeric/numeric-string `totalPrice`, and
+  a non-empty `status`. Invalid JSON, unexpected wrappers, malformed records,
+  and ambiguous IDs produce a visible error rather than an empty list.
+- Cards show only the supplied order ID, item names, total price in birr, and
+  status. The current contract supplies no quantities, customer, payment, or
+  delivery details. Unknown status strings remain visible with actions disabled.
+
+| Current backend status | Available action | Request |
+| --- | --- | --- |
+| `Pending` | Accept order | `PATCH /orders/:id` with `{ "status": "Accepted" }` |
+| `Pending` | Decline order, after confirmation | Same endpoint with `{ "status": "Declined" }` |
+| `Accepted` | Mark ready | Same endpoint with `{ "status": "Done" }` |
+| `Accepted` | Delete order, after confirmation | `DELETE /orders/:id` |
+| `Declined` or `Done` | No further action | None |
+
+- The existing **Order Ready → Done** mapping is retained. `Done` is displayed
+  as **Ready**, referring to food preparation. It is not evidence of delivery
+  completion. The backend's broader meaning of `Done` remains ambiguous and
+  needs clarification before future fulfillment features.
+- An order stays unchanged while its action is pending. Repeated actions on
+  the same order are blocked; different orders can update independently.
+  Destructive confirmations reuse the menu dialog's focus containment, initial
+  safe action, Escape dismissal when idle, and focus restoration.
+- A successful PATCH/DELETE response is followed by a fresh `GET /orders`.
+  The card updates only when that read confirms the requested status or the
+  deleted record's absence. No undocumented mutation response body is assumed.
+  Verification reads are not mutation retries. Each request has a 20-second
+  timeout; a write plus its verification may take up to about 40 seconds.
+- If a write fails, the card and actions remain available with an error.
+  Connection loss or failed/inconsistent verification leaves the outcome
+  uncertain: the service may already have changed the record. Refresh orders
+  before deciding whether to retry. Mutations are never retried automatically.
+- Deletion removes the record from this list after confirmation. The service's
+  permanent retention, audit history, and recovery behavior are unverified.
+  Deletion is not an implemented cancellation, refund, or archive workflow.
+- The frontend has no server-side version checks, action idempotency guarantee,
+  or verified authorization boundaries. Concurrent merchants can change an
+  order between reads. Read-back confirmation does not prove durability across
+  backend restarts; live mutation persistence remains unverified.
+- Order regression tests and browser action checks use isolated/intercepted
+  requests for loading, empty, malformed, error/retry, success/failure, and
+  duplicate-action cases. Live checks are GET-only and never mutate orders.
