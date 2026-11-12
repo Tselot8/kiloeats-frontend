@@ -1,204 +1,78 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import "../App.css";
-import { BASE_URL } from "../utils/api";
+import { useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useMenu } from "../hooks/useMenu.js";
+import { menuErrorMessage, updateMenuItem } from "../utils/api.js";
+import { formatMenuPrice, hasUniqueMenuId, menuItemId } from "../utils/menu.js";
+import MenuForm from "./MenuForm.jsx";
+import FoodImage from "./FoodImage.jsx";
 
-const EditMenuPage = ({ onMenuUpdate }) => {
-  const [foodItems, setFoodItems] = useState([]);
-  const [selectedFood, setSelectedFood] = useState(null);
-  const [editedFood, setEditedFood] = useState({
-    name: "",
-    description: "",
-    price: "",
-    image: "",
-    rating: 4
-  });
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-
-  useEffect(() => {
-    const getMenuData = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/item`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch menu data");
-        }
-        const data = await response.json();
-        setFoodItems(data.item?.menu?.menuItems || []);
-      } catch (error) {
-        console.error("Error fetching menu data:", error);
-        setError("Failed to load menu items.");
-      }
-    };
-    getMenuData();
-  }, []);
-
-  const handleFoodSelection = (e) => {
-    const selected = foodItems.find((item) => item.name === e.target.value);
-    setSelectedFood(selected);
-    setEditedFood({ ...selected, rating: selected.rating || 4 });
-    setError(null);
-    setSuccess(null);
+const EditMenuPage = () => {
+  const { items, setItems, loading, loadError, reload } = useMenu();
+  const [params, setParams] = useSearchParams();
+  const selectedId = params.get("item") || "";
+  const selectedItem = items.find((item) => menuItemId(item) === selectedId && hasUniqueMenuId(item, items));
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [success, setSuccess] = useState("");
+  const inFlight = useRef(false);
+  const select = (event) => {
+    setParams({ item: event.target.value });
+    setSaveError("");
+    setSuccess("");
   };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditedFood((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleEditFood = async (e) => {
-    e.preventDefault();
+  const save = async (values) => {
+    if (inFlight.current || !selectedItem) return;
+    inFlight.current = true;
+    setSaving(true);
+    setSaveError("");
+    setSuccess("");
     try {
-      if (!selectedFood) {
-        setError("Please select a food item to edit.");
-        return;
-      }
-      const response = await fetch(`${BASE_URL}/item`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch restaurant data");
-      }
-      const restaurant = await response.json();
-      const currentMenu = restaurant.item.menu.menuItems;
-
-      const foodToEditIndex = currentMenu.findIndex(
-        (item) => item.id === editedFood.id
-      );
-      if (foodToEditIndex === -1) {
-        throw new Error("Food item not found");
-      }
-
-      const updatedFoodItem = { ...currentMenu[foodToEditIndex], ...editedFood };
-      const updatedMenu = [
-        ...currentMenu.slice(0, foodToEditIndex),
-        updatedFoodItem,
-        ...currentMenu.slice(foodToEditIndex + 1),
-      ];
-
-      const updateResponse = await fetch(`${BASE_URL}/item`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          item: {
-            menu: {
-              menuItems: updatedMenu,
-            },
-          },
-        }),
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error("Failed to update the restaurant menu on the server");
-      }
-
-      setFoodItems(updatedMenu);
-      if (onMenuUpdate) {
-        onMenuUpdate(updatedMenu); // Update App.jsx state
-      }
-      setSelectedFood(null);
-      setEditedFood({ name: "", description: "", price: "", image: "", rating: 4 });
-      setError(null);
-      setSuccess("Menu item updated successfully!");
+      const updated = await updateMenuItem(selectedItem.id, values);
+      setItems(updated);
+      setSuccess(`Saved changes to ${values.name}.`);
     } catch (error) {
-      console.error("Error editing food item:", error);
-      setError("Failed to update menu item. Please try again.");
+      setSaveError(menuErrorMessage(error));
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
     }
   };
 
   return (
-    <div className="edit-page">
+    <section className="edit-page" aria-labelledby="edit-menu-title">
       <div className="container">
-        <h2 className="edit-your-menu">Edit Your Menu</h2>
-        <Link to="/" className="button-link button-secondary back-to-menu">Back to Menu</Link>
+        <div><h2 id="edit-menu-title">Edit Your Menu</h2><p className="menu-helper">Choose a food item, update its details, then save your changes.</p></div>
+        <Link to="/" className="button-link button-secondary back-to-menu" onClick={(event) => { if (saving) event.preventDefault(); }} aria-disabled={saving}>Back to Menu</Link>
       </div>
-      <div>
-        <section className="form-section">
-          <h3>Select Food to Edit</h3>
-          {error && <p className="declined-text">{error}</p>}
-          {success && <p className="success-text">{success}</p>}
-          <select
-            className="combo"
-            onChange={handleFoodSelection}
-            value={selectedFood?.name || ""}
-          >
-            <option value="" disabled>
-              Choose a food item
-            </option>
-            {foodItems.map((item, index) => (
-              <option key={index} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          {selectedFood && (
-            <form onSubmit={handleEditFood}>
-              <p>
-                <input
-                  type="text"
-                  className="edit-form"
-                  name="name"
-                  placeholder="Food name"
-                  value={editedFood.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="text"
-                  className="edit-form"
-                  name="description"
-                  placeholder="Food description"
-                  value={editedFood.description}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="text"
-                  className="edit-form"
-                  name="price"
-                  placeholder="Food price"
-                  value={editedFood.price}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <label htmlFor="image-url" className="upload-label">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  id="image-url"
-                  className="edit-form"
-                  name="image"
-                  placeholder="Enter image URL"
-                  value={editedFood.image}
-                  onChange={handleInputChange}
-                />
-              </p>
-              <button type="submit" className="form-button">
-                Save Changes
-              </button>
-            </form>
-          )}
-        </section>
-      </div>
-    </div>
+      {loading && <p className="menu-state" role="status">Loading your menu…</p>}
+      {loadError && <div className="menu-feedback menu-feedback-error" role="alert"><p>{loadError}</p><button className="button-secondary" onClick={reload} disabled={saving}>Retry loading menu</button></div>}
+      <p role="status" className="menu-success">{success}</p>
+      {!loading && !loadError && items.length === 0 && <div className="menu-state"><h3>No food to edit yet</h3><p>Return to your menu to add a food item.</p></div>}
+      {!loading && items.length > 0 && (
+        <div className="menu-editor-layout">
+          <div className="form-section menu-selection">
+            <h3>Select food to edit</h3>
+            <label htmlFor="food-selection">Food item</label>
+            <select id="food-selection" className="combo" onChange={select} value={selectedItem ? selectedId : ""} disabled={saving}>
+              <option value="" disabled>Choose a food item</option>
+              {items.map((item, index) => {
+                const editable = hasUniqueMenuId(item, items);
+                return <option key={editable ? `id:${menuItemId(item)}` : `unidentified:${index}`} value={editable ? menuItemId(item) : `unidentified:${index}`} disabled={!editable}>{item.name || "Unnamed item"} — {formatMenuPrice(item.price)}{editable ? ` · ID ${menuItemId(item)}` : " · ID needs attention"}</option>;
+              })}
+            </select>
+            <p className="menu-helper">Items with missing or duplicate IDs cannot be changed safely.</p>
+            {selectedId && !selectedItem && !loadError && <p className="error-text" role="alert">This item is no longer available for editing. Choose another food item.</p>}
+          </div>
+          {selectedItem ? (
+            <section className="form-section menu-editor-fields" aria-label="Edit food details">
+              <div className="menu-editor-summary"><FoodImage src={selectedItem.image} name={selectedItem.name || "Unnamed item"} /><div><h3>{selectedItem.name || "Unnamed item"}</h3><p className="price">{formatMenuPrice(selectedItem.price)}</p></div></div>
+              <MenuForm key={selectedId} initialItem={selectedItem} onSave={save} saving={saving} error={saveError} />
+            </section>
+          ) : <div className="menu-state menu-selection-hint"><h3>Ready for an update?</h3><p>Select a food item to edit its name, description, price, or image.</p></div>}
+        </div>
+      )}
+    </section>
   );
-};
-
-EditMenuPage.propTypes = {
-  onMenuUpdate({ onMenuUpdate }) {
-    if (onMenuUpdate != null && typeof onMenuUpdate !== "function") {
-      return new Error("EditMenuPage onMenuUpdate must be a function.");
-    }
-    return null;
-  },
 };
 
 export default EditMenuPage;

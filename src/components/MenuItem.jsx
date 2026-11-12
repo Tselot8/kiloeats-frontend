@@ -1,47 +1,38 @@
-import "../App.css";
+import { Link } from "react-router-dom";
+import FoodImage from "./FoodImage.jsx";
+import { formatMenuPrice, hasUniqueMenuId, menuItemId } from "../utils/menu.js";
 
 const MenuItem = ({ items, onRemoveFood }) => (
   <div className="menu-category">
-    {items.length === 0 ? (
-      <p>No items available.</p>
-    ) : (
-      items.map((item, index) => (
-        <div key={index} className="menu-item">
-          <img src={item.image} alt={item.name} className="food-image" />
+    {items.map((item, index) => {
+      const editable = hasUniqueMenuId(item, items);
+      const name = item.name || "Unnamed item";
+      const rating = Number.isFinite(Number(item.rating)) ? Math.max(0, Math.min(5, Math.floor(Number(item.rating)))) : 0;
+      return (
+        <article key={editable ? `id:${menuItemId(item)}` : `unidentified:${index}`} className="menu-item">
+          <FoodImage src={item.image} name={name} />
           <div className="food-details">
-            <h3>
-              {item.name} <span className="rating">{'⭐'.repeat(item.rating)}</span>
-            </h3>
-            <p>{item.description}</p>
+            <h3>{name}</h3>
+            {rating > 0 && <span className="rating" role="img" aria-label={`${rating} out of 5 stars`}>{"★".repeat(rating)}</span>}
+            <p>{item.description || "No description provided."}</p>
+            {!editable && <p className="menu-id-warning">This item needs a unique ID before it can be edited or removed.</p>}
           </div>
-          <div className="food-price container">
-            <div className="price">{item.price} Br.</div>
-            <button
-              className="removeFood"
-              onClick={() => onRemoveFood(item.name)}
-            >
-              -
-            </button>
+          <div className="menu-item-actions">
+            <p className="price">{formatMenuPrice(item.price)}</p>
+            <div className="menu-card-buttons">
+              {editable && <Link to={`/edit-menu?item=${encodeURIComponent(menuItemId(item))}`} className="button-link button-secondary" aria-label={`Edit ${name}`}>Edit</Link>}
+              <button className="removeFood" onClick={() => onRemoveFood(item)} disabled={!editable} aria-label={`Remove ${name}`}>Remove</button>
+            </div>
           </div>
-        </div>
-      ))
-    )}
+        </article>
+      );
+    })}
   </div>
 );
 
 MenuItem.propTypes = {
-  items({ items }) {
-    if (!Array.isArray(items)) {
-      return new Error("MenuItem requires an items array.");
-    }
-    return null;
-  },
-  onRemoveFood({ onRemoveFood }) {
-    if (typeof onRemoveFood !== "function") {
-      return new Error("MenuItem requires an onRemoveFood function.");
-    }
-    return null;
-  },
+  items: (props) => !Array.isArray(props.items) ? new Error("MenuItem requires an items array.") : null,
+  onRemoveFood: (props) => typeof props.onRemoveFood !== "function" ? new Error("MenuItem requires onRemoveFood.") : null,
 };
 
 export default MenuItem;

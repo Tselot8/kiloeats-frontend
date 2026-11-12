@@ -34,18 +34,19 @@ separate backend startup are required to start the frontend itself.
 | `npm run dev` | Start the development server with hot reload. |
 | `npm run build` | Build production assets into `dist/`. |
 | `npm run lint` | Check JavaScript and JSX with ESLint. |
+| `npm run test:menu` | Run isolated menu API and validation regression tests with Node's built-in test runner. No live requests are made. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
-There is currently no automated test script. Preview is for local verification,
-not a production server. Production hosting must serve `index.html` for client
+Preview is for local verification, not a production server.
+Production hosting must serve `index.html` for client
 routes so direct links and refreshes work.
 
 ## Existing routes
 
 | Route | Screen |
 | --- | --- |
-| `/` | Restaurant menu, add-food dialog, and removal controls. |
-| `/edit-menu` | Select and edit an existing menu item. |
+| `/` | Menu cards, add-food dialog, and confirmed removal. |
+| `/edit-menu` | Select and edit a menu item by ID; card links preselect it with `?item=<id>`. |
 | `/orders` | Incoming orders with accept, decline, ready, and delete actions. |
 | `/profile` | Restaurant profile and edit dialog. |
 | `/signup` | Incomplete customer/restaurant-owner signup form. |
@@ -72,12 +73,46 @@ restaurant placeholder directly by URL.
 - Signup also validates a password-confirmation value without rendering its
   input, so valid-password submissions cannot pass that check. The login
   button has no action. Authentication and route protection are not implemented.
-- Several failed reads fall back to empty arrays/objects, so an empty menu,
-  no orders, or `N/A` profile fields do not establish that the backend has no
-  data. Check browser Network and Console panels when diagnosing failures.
+- Menu reads now surface HTTP, connection, timeout, and malformed-response
+  errors with a retry action. Order/profile helpers still fall back to empty
+  arrays/objects on some failures; no orders or `N/A` profile fields do not
+  establish that the backend has no data.
 - The root JSON files are sample data, not automatically loaded fallbacks.
   Although `json-server` is declared, no script launches it, and `server.js`
   is empty. No backend, database, or authentication server runs with Vite.
 - External food images can fail independently of the frontend or API; one
   image was blocked with `net::ERR_BLOCKED_BY_ORB` during verification.
-  Detailed page-specific layout and accessibility improvements remain for later milestones.
+  Menu images now show an accessible placeholder for missing or failed images.
+
+## Menu management and remaining service constraints
+
+- Add/edit forms validate required names and descriptions, non-negative birr
+  prices with at most two decimal places, and optional HTTP(S) image URLs.
+  Failed saves retain the draft. Submissions and dialog dismissal are disabled
+  while saving; a request times out after 20 seconds.
+- Menu dialogs use native modal dialogs for background inertness and keyboard
+  focus containment, with initial focus, Escape dismissal when idle, and focus
+  restoration. Removal first asks for confirmation and initially focuses the
+  non-destructive action.
+- Editing and removal use unique IDs, including string IDs, rather than names.
+  Missing or ambiguous IDs remain visible but cannot be edited or removed;
+  they require correction in the backend data. Same-name foods remain separate
+  records. New numeric IDs use the highest existing non-negative numeric ID
+  plus one, rather than the array length. IDs are still client-assigned and
+  may be reused after deletions; server-generated IDs are a backend follow-up.
+- Every mutation first fetches the latest `/item`, then PATCHes the existing
+  `{ item: { ...existingItem, menu: { ...existingMenu, menuItems: [...] } } }`
+  structure. Nested metadata is retained. The displayed menu changes only after
+  a successful HTTP response. The service's PATCH response is not used as a
+  new response contract; persistence across reloads has not been verified live.
+- Whole-menu replacement cannot prevent concurrent users from overwriting
+  changes between that GET and PATCH. Atomic per-item operations, version
+  checking, server validation, ownership checks, and safe automatic retries
+  require backend support. No new endpoints are assumed here.
+- A connection failure during PATCH leaves its outcome uncertain. The UI keeps
+  the draft, explains that the change may have reached the service, and does
+  not retry automatically. Check the current menu before retrying to avoid
+  adding a duplicate.
+- Automated API tests mock all requests. Browser add/edit/remove success,
+  failure, and duplicate-submission checks use intercepted requests and isolated
+  fixture state. Live verification is read-only; no test mutates the live menu.
