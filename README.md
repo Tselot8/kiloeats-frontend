@@ -51,7 +51,7 @@ routes so direct links and refreshes work.
 | `/signup` | Incomplete customer/restaurant-owner signup form. |
 | `/restaurant/:restaurantId` | Placeholder displaying the restaurant ID, for example `/restaurant/1`. |
 
-The main navigation links to Home, Orders, and Profile. Open signup and the
+The main navigation links to Menu, Orders, and Profile. Open signup and the
 restaurant placeholder directly by URL.
 
 ## Backend limitations
@@ -80,4 +80,4 @@ restaurant placeholder directly by URL.
   is empty. No backend, database, or authentication server runs with Vite.
 - External food images can fail independently of the frontend or API; one
   image was blocked with `net::ERR_BLOCKED_BY_ORB` during verification.
-  Existing responsive-layout and accessibility work remains for later milestones.
+  Detailed page-specific layout and accessibility improvements remain for later milestones.

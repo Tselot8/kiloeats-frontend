@@ -73,9 +73,7 @@ const OrdersPage = () => {
       <header>
         <div className="container3">
           <h2 className="main-title">Orders</h2>
-          <Link to="/">
-            <button className="orders-back-to-menu">Back to Menu</button>
-          </Link>
+          <Link to="/" className="button-link button-secondary orders-back-to-menu">Back to Menu</Link>
         </div>
       </header>
       <div>

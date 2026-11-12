@@ -111,11 +111,7 @@ const EditMenuPage = ({ onMenuUpdate }) => {
     <div className="edit-page">
       <div className="container">
         <h2 className="edit-your-menu">Edit Your Menu</h2>
-        <Link to="/">
-          <button className="back-to-menu">
-            <strong>Back to Menu</strong>
-          </button>
-        </Link>
+        <Link to="/" className="button-link button-secondary back-to-menu">Back to Menu</Link>
       </div>
       <div>
         <section className="form-section">

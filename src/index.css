@@ -1,53 +1,167 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  color-scheme: light;
+  --color-background: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eeede7;
+  --color-text: #24332f;
+  --color-muted: #626d67;
+  --color-border: #dedfd7;
+  --color-brand: #2b767e;
+  --color-brand-hover: #205c63;
+  --color-brand-soft: #e8f1ef;
+  --color-danger: #963c35;
+  --color-danger-soft: #fbefec;
+  --color-success: #326448;
+  --font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-title: clamp(1.75rem, 2.5vw, 2.25rem);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --shadow-sm: 0 2px 8px rgb(36 51 47 / 3%);
+  --shadow-dialog: 0 20px 60px rgb(36 51 47 / 18%);
+  --focus-ring: 3px solid var(--color-brand);
+  --content-width: 70rem;
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.6;
   font-weight: 400;
-  font-size: 20px;
+  color: var(--color-text);
+  background: var(--color-background);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
 }
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  padding-top: 20px;
+button, input, select, textarea {
+  font: inherit;
 }
-
+img {
+  display: block;
+  max-width: 100%;
+}
+h1, h2, h3, h4 {
+  color: var(--color-text);
+  line-height: 1.25;
+}
+h1, h2 {
+  letter-spacing: -0.035em;
+}
+h2 {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-title);
+  font-weight: 650;
+}
+h3 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+p {
+  margin: 0 0 var(--space-4);
+  overflow-wrap: anywhere;
+}
 a {
-  font-weight: 500;
-  color: #013237;
-  text-decoration: none;
+  color: var(--color-brand);
+  text-underline-offset: 0.2em;
 }
-
 a:hover {
-  color: #02585f;
+  color: var(--color-brand-hover);
+}
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
 }
 
-button {
-  border-radius: 8px;
+button, .button-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.65rem var(--space-4);
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #013237;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--color-brand);
+  color: var(--color-surface);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.25s;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+button:hover, .button-link:hover {
+  background: var(--color-brand-hover);
+  color: var(--color-surface);
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.button-secondary, .close-modal {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.button-secondary:hover, .close-modal:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--color-muted);
 }
 
-button:hover {
-  background-color: #02585f;
+label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+input, select, textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.7rem var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  border-color: var(--color-brand);
+}
+label > input, label > select, .upload-label + input {
+  margin-top: var(--space-2);
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto #013237;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
 }

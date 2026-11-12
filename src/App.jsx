@@ -9,6 +9,7 @@ import RestaurantDetailsWrapper from "./components/RestaurantDetailsWrapper.jsx"
 import SignUpPage from "./components/SignUpPage.jsx";
 import { fetchMenuData } from "./utils/api";
 import { BASE_URL } from "./utils/api.js";
+import AppHeader from "./components/AppHeader.jsx";
 
 const App = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -131,36 +132,24 @@ const App = () => {
     setError(null);
   };
 
-  const Header = () => (
-    <header className='main-header'>
-      <div className="header">
-        <h1>KiloEats</h1>
-      </div>
-      <nav>
-        <Link to="/">Home</Link>
-        <Link to="/orders">Orders</Link>
-        <Link to="/profile">Profile</Link>
-      </nav>
-    </header>
-  );
-
   return (
     <Router>
       <div className="app">
-        <main>
+        <a className="skip-link" href="#main-content">Skip to content</a>
+        <AppHeader />
+        <main id="main-content" className="layout-container app-main" tabIndex={-1}>
           {error && <p className="declined-text">{error}</p>}
           <Routes>
             <Route
               path="/"
               element={
                 <>
-                  <Header />
-                  <h2 className="main-title">Your Menu</h2>
-                  <div className="container1">
-                    <Link to="/edit-menu">
-                      <button className="edit-menu">Edit Menu</button>
-                    </Link>
-                    <button className="addFood" onClick={handleOpenModal}>+</button>
+                  <div className="page-header">
+                    <h2 className="main-title">Your Menu</h2>
+                    <div className="container1">
+                      <Link to="/edit-menu" className="button-link button-secondary edit-menu">Edit Menu</Link>
+                      <button className="addFood" onClick={handleOpenModal} aria-label="Add food">+</button>
+                    </div>
                   </div>
                   <MenuItem items={foodItems} onRemoveFood={handleRemoveFood} />
                 </>
@@ -168,48 +157,23 @@ const App = () => {
             />
             <Route
               path="/edit-menu"
-              element={
-                <>
-                  <Header />
-                  <EditMenuPage onMenuUpdate={handleMenuUpdate} />
-                </>
-              }
+              element={<EditMenuPage onMenuUpdate={handleMenuUpdate} />}
             />
             <Route
               path="/orders"
-              element={
-                <>
-                  <Header />
-                  <OrdersPage />
-                </>
-              }
+              element={<OrdersPage />}
             />
             <Route
               path="/profile"
-              element={
-                <>
-                  <Header />
-                  <ProfilePage />
-                </>
-              }
+              element={<ProfilePage />}
             />
             <Route
               path="/restaurant/:restaurantId"
-              element={
-                <>
-                  <Header />
-                  <RestaurantDetailsWrapper />
-                </>
-              }
+              element={<RestaurantDetailsWrapper />}
             />
             <Route
               path="/signup"
-              element={
-                <>
-                  <Header />
-                  <SignUpPage />
-                </>
-              }
+              element={<SignUpPage />}
             />
           </Routes>
         </main>
@@ -258,7 +222,7 @@ const App = () => {
         )}
 
         <footer className='main-footer'>
-          <div className="footer-content">
+          <div className="layout-container footer-content">
             <div className="about-us">
               <h3>About Us</h3>
               <p>Discover the best meals with KiloEats</p>
