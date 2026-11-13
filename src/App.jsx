@@ -1,5 +1,6 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
+import "./studentBrowsing.css";
 import MenuPage from "./components/MenuPage.jsx";
 import EditMenuPage from "./components/EditMenuPage.jsx";
 import OrdersPage from "./components/OrdersPage.jsx";
@@ -10,6 +11,7 @@ import LoginPage from "./components/LoginPage.jsx";
 import AppHeader from "./components/AppHeader.jsx";
 import NotFoundPage from "./components/NotFoundPage.jsx";
 import RouteFocus from "./components/RouteFocus.jsx";
+import StudentBrowsePage from "./components/StudentBrowsePage.jsx";
 
 const App = () => (
   <Router>
@@ -23,6 +25,7 @@ const App = () => (
           <Route path="/edit-menu" element={<EditMenuPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/browse" element={<StudentBrowsePage />} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />

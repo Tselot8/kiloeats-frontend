@@ -1,0 +1,69 @@
+/* Student browsing uses the existing KiloEats tokens and shared controls. */
+.student-page-heading { margin-bottom: var(--space-6); }
+.student-page-heading h2 { margin-bottom: var(--space-3); }
+.student-page-heading > p:last-child { margin: 0; color: var(--color-muted); }
+.student-menu-page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-6); }
+.student-menu-page-heading h2 { margin: 0; }
+.student-demo-notice { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-5); margin-bottom: var(--space-6); background: var(--color-brand-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.student-demo-badge { flex-shrink: 0; padding: var(--space-1) var(--space-3); color: var(--color-brand-hover); background: var(--color-surface); border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 650; }
+.student-demo-notice p { margin: 0; font-size: var(--text-sm); }
+.student-demo-notice p + p { margin-top: var(--space-2); color: var(--color-muted); }
+.student-campus-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); align-items: start; gap: var(--space-5); padding: var(--space-5); margin-bottom: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.student-campus-panel label { font-size: var(--text-base); margin-bottom: var(--space-2); }
+.student-campus-panel p { margin: 0; color: var(--color-muted); font-size: var(--text-sm); }
+.student-campus-control { min-width: 0; }
+.student-campus-control .error-text { margin-top: var(--space-2); color: var(--color-danger); }
+.student-campus-control [aria-invalid="true"] { border-color: var(--color-danger); }
+.student-results-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+.student-results-heading h3, .student-results-heading p { margin: 0; }
+.student-results-heading p { color: var(--color-muted); font-size: var(--text-sm); }
+.student-restaurant-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+.student-restaurant-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.student-restaurant-card > .food-image { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.student-restaurant-card-body { display: flex; flex-direction: column; flex: 1; align-items: flex-start; gap: var(--space-4); padding: var(--space-5); }
+.student-restaurant-card h4 { margin: 0; font-size: var(--text-lg); overflow-wrap: anywhere; }
+.student-restaurant-card-body > p { flex: 1; margin: 0; color: var(--color-muted); font-size: var(--text-sm); }
+.student-restaurant-card .button-link { width: 100%; }
+.student-coverage { min-width: 0; }
+.student-coverage > span { display: block; color: var(--color-muted); font-size: var(--text-xs); margin-bottom: var(--space-2); }
+.student-coverage ul { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0; margin: 0; list-style: none; }
+.student-coverage li { padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--text-xs); overflow-wrap: anywhere; }
+.student-restaurant-overview { display: grid; grid-template-columns: 12rem minmax(0, 1fr); align-items: center; gap: var(--space-6); padding: var(--space-5); margin-bottom: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.student-restaurant-overview > .food-image { width: 100%; height: 10rem; }
+.student-restaurant-overview h3 { margin-bottom: var(--space-3); font-size: var(--text-xl); overflow-wrap: anywhere; }
+.student-restaurant-overview p { color: var(--color-muted); }
+.student-menu-recovery > p { margin-bottom: var(--space-4); }
+.student-food-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.student-food-card { display: flex; align-items: flex-start; gap: var(--space-4); min-width: 0; padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.student-food-card > .food-image { width: 88px; height: 88px; }
+.student-food-body { flex: 1; min-width: 0; }
+.student-food-body h4 { margin: 0 0 var(--space-2); font-size: var(--text-lg); overflow-wrap: anywhere; }
+.student-food-body > p { color: var(--color-muted); font-size: var(--text-sm); margin-bottom: var(--space-4); }
+.student-food-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); }
+.student-food-price { font-weight: 650; overflow-wrap: anywhere; }
+.student-food-availability { padding: var(--space-1) var(--space-2); background: var(--color-surface-muted); color: var(--color-muted); border-radius: var(--radius-sm); font-size: var(--text-xs); }
+.student-food-availability.is-available { background: var(--color-brand-soft); color: var(--color-success); }
+.student-food-unavailable { border-style: dashed; }
+.student-food-body > .student-unavailable-note { margin: var(--space-3) 0 0; }
+
+/* Make room for browsing while preserving every merchant link. */
+@media (min-width: 640px) and (max-width: 1099px) {
+  .header-inner { flex-wrap: wrap; gap: var(--space-4); }
+  .header-navigation { width: 100%; justify-content: space-between; }
+  .primary-nav { flex: 1; }
+  .nav-link { padding-inline: var(--space-4); }
+}
+@media (max-width: 899px) {
+  .student-restaurant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .student-food-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  .primary-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .primary-nav .nav-link:first-child { grid-column: 1 / -1; }
+  .student-restaurant-grid, .student-campus-panel, .student-restaurant-overview { grid-template-columns: minmax(0, 1fr); }
+  .student-demo-notice { flex-direction: column; gap: var(--space-3); padding: var(--space-4); }
+  .student-campus-panel, .student-restaurant-card-body, .student-restaurant-overview, .student-food-card { padding: var(--space-4); }
+  .student-restaurant-overview { gap: var(--space-4); }
+  .student-restaurant-overview > .food-image { height: auto; aspect-ratio: 16 / 9; }
+  .student-food-card > .food-image { width: 64px; height: 64px; }
+}

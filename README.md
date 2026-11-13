@@ -2,7 +2,8 @@
 
 React 18, React Router 7, and Vite 6 frontend for KiloEats, a university food
 delivery project. The existing interface primarily manages restaurant menus,
-incoming orders, and restaurant profiles. Student cart and checkout flows are
+incoming orders, and restaurant profiles. A separate student demo lets you
+browse synthetic restaurants and menus by campus. Cart and checkout flows are
 not implemented.
 
 ## Prerequisites
@@ -65,6 +66,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:profile` | Run isolated profile parsing, validation, save, and read-back regression tests. No live requests are made. |
 | `npm run test:auth` | Run isolated auth validation, payload, availability, and adapter-failure tests. No live requests are made. |
 | `npm run test:reliability` | Check API URL validation and distinguish HTTP, malformed, network/body-download, timeout, and empty-data outcomes. |
+| `npm run test:browsing` | Check demo campus filtering, menu lookup, availability, invalid links, isolated snapshots, and cancellation. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -81,12 +83,13 @@ routes so direct links and refreshes work.
 | `/profile` | Restaurant details, refresh/error states, and an accessible editing dialog. |
 | `/signup` | Customer/restaurant-owner signup UI with validation; live submission unavailable. |
 | `/login` | Matching email/password login UI; live submission unavailable. |
-| `/restaurant/:restaurantId` | Explicit unfinished-feature notice, restaurant ID, and return link; no restaurant browsing/data request. |
+| `/browse?campus=<id>` | Student restaurant discovery with URL-based campus selection and explicit demo data. |
+| `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
 | Any unknown path | Accessible not-found screen with Menu and Orders recovery links. |
 
-The main navigation links to Menu, Orders, and Profile, with a separate Log in
-entry. Signup and login link to each other. Open the restaurant placeholder
-directly by URL.
+The main navigation links to Browse restaurants, Menu, Orders, and Profile,
+with a separate Log in entry. Signup and login link to each other. Student and
+merchant navigation do not provide authorization or protect merchant routes.
 
 Client-side page navigation updates the document title and focuses the new page
 heading. Initial direct loads preserve normal keyboard entry through the skip
@@ -268,7 +271,7 @@ the router's case/trailing-slash matching.
 
 ## Frontend reliability verification
 
-- Build, lint, and all 71 isolated regression tests pass. Tests intercept fetch;
+- Build, lint, and all 86 isolated regression tests pass. Tests intercept fetch;
   the suite never creates accounts or changes the live service. New coverage
   checks API configuration, interrupted body downloads, and distinct HTTP,
   malformed, timeout, and valid empty responses across all three resources.
@@ -291,8 +294,42 @@ the router's case/trailing-slash matching.
   behavior remain unverified. No deployment or real-device/screen-reader audit
   was performed; production hosting still needs an SPA fallback.
 
-Before student browsing begins, settle the supported campus/service area,
-restaurant ownership/approval, delivery fulfillment and handoff, currency/payment
-methods and fees, and order cancellation/status meanings. A small first release
-can target one campus with approved restaurants; other choices require product
-agreement and documented backend contracts rather than frontend assumptions.
+## Student browsing demo and remaining decisions
+
+- Start at `/browse`. No campus is assumed until selected. Supported URL IDs are
+  `aau-4k` (AAU 4K), `aau-5k` (AAU 5K), `aau-6k` (AAU 6K), and
+  `yared-music-school` (Yared Music School). Selection lives in `?campus=`, with
+  normal history entries; refresh, back/forward, restaurant links, and return
+  links preserve it. A direct restaurant URL without a campus asks you to choose.
+- Example: `/restaurant/demo-acacia-kitchen?campus=aau-4k`. All five restaurants,
+  food availability, descriptions, and ETB food prices are synthetic. Local SVG
+  illustrations are illustrative, not restaurant photos. No real partnerships,
+  approval, live availability, deliveries, ratings, reviews, distances, or exact
+  delivery fees are claimed. Missing/failed images use the existing fallback.
+- `src/data/demoRestaurants.js` is the catalog. The small asynchronous read
+  boundary in `src/utils/studentBrowsing.js` exposes `listRestaurants` and
+  `getRestaurantMenu`, returns independent snapshots, and honours abort signals.
+  It has no HTTP transport, writes, persistence, or dependency on the merchant
+  API setting. Replace that boundary when a supported student backend exists;
+  these client data shapes are not an asserted backend contract.
+- Unsupported campuses, unknown restaurant IDs, unsupported campus/restaurant
+  combinations, empty menus, and unavailable menus have separate recovery
+  states. Unavailable foods stay visible and labeled. No cart, add-to-cart,
+  checkout, order submission, authentication, map, or geolocation is implemented.
+- `tests/fixtures/browsing.html` is a separate development-only test entry for
+  empty discovery, failed/deferred reads, explicit retries, and stale-result
+  handling. Normal routes cannot enable its controls through query parameters
+  or storage. The production build includes the intentional browsing demo data
+  and excludes both browser test harnesses. Browser regression checks use
+  intercepted merchant GETs; no live writes or credentials are sent.
+- Agreed future product rules: the four campuses above; manually approved
+  restaurants with staff-managed menus; restaurant-managed delivery and cash on
+  delivery in ETB; students may cancel before acceptance. Future statuses are
+  Pending → Accepted → Ready → Delivered, with Declined and Cancelled separate.
+  The legacy merchant endpoints and **Order Ready → Done** mapping are unchanged.
+- Before cart/checkout, define exact distance bands/fees (every fee must be
+  strictly below 100 ETB), how distance is established without guessing, supported
+  campus drop-off points and handoff/contact rules, and how/when a fee is quoted.
+  Establish documented student read/order contracts, server approval/membership
+  enforcement, and cancellation/acceptance race handling. No operational pricing
+  formula or new order-state API is implemented here.
