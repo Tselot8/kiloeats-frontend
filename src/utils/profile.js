@@ -1,3 +1,5 @@
+import { isValidEmail } from './validation.js';
+
 export const PROFILE_FIELDS = [
   { key: 'name', label: 'Restaurant name', type: 'text' },
   { key: 'email', label: 'Email', type: 'email' },
@@ -23,15 +25,12 @@ export const parseRestaurantProfile = (data) => {
   return { ...(data.id != null ? { id: data.id } : {}), ...values };
 };
 
-// Matches the existing email input's syntax, including local host names.
-const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
 export const validateProfileFields = (values) => {
   const normalized = profileValues(values);
   const errors = {};
   for (const { key, label } of PROFILE_FIELDS) {
     if (!normalized[key]) errors[key] = `Enter the ${label.toLowerCase()}.`;
   }
-  if (normalized.email && !emailPattern.test(normalized.email)) errors.email = 'Enter a valid email address.';
+  if (normalized.email && !isValidEmail(normalized.email)) errors.email = 'Enter a valid email address.';
   return errors;
 };

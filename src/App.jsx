@@ -6,6 +6,7 @@ import OrdersPage from "./components/OrdersPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import RestaurantDetailsWrapper from "./components/RestaurantDetailsWrapper.jsx";
 import SignUpPage from "./components/SignUpPage.jsx";
+import LoginPage from "./components/LoginPage.jsx";
 import AppHeader from "./components/AppHeader.jsx";
 
 const App = () => (
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/login" element={<LoginPage />} />
         </Routes>
       </main>
       <footer className="main-footer">

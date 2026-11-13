@@ -37,6 +37,7 @@ separate backend startup are required to start the frontend itself.
 | `npm run test:menu` | Run isolated menu API and validation regression tests with Node's built-in test runner. No live requests are made. |
 | `npm run test:orders` | Run isolated order parsing, transition, mutation, and read-back regression tests. No live requests are made. |
 | `npm run test:profile` | Run isolated profile parsing, validation, save, and read-back regression tests. No live requests are made. |
+| `npm run test:auth` | Run isolated auth validation, payload, availability, and adapter-failure tests. No live requests are made. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -51,11 +52,13 @@ routes so direct links and refreshes work.
 | `/edit-menu` | Select and edit a menu item by ID; card links preselect it with `?item=<id>`. |
 | `/orders` | Incoming orders, preparation status, accept/ready actions, and confirmed decline/deletion. |
 | `/profile` | Restaurant details, refresh/error states, and an accessible editing dialog. |
-| `/signup` | Incomplete customer/restaurant-owner signup form. |
+| `/signup` | Customer/restaurant-owner signup UI with validation; live submission unavailable. |
+| `/login` | Matching email/password login UI; live submission unavailable. |
 | `/restaurant/:restaurantId` | Placeholder displaying the restaurant ID, for example `/restaurant/1`. |
 
-The main navigation links to Menu, Orders, and Profile. Open signup and the
-restaurant placeholder directly by URL.
+The main navigation links to Menu, Orders, and Profile, with a separate Log in
+entry. Signup and login link to each other. Open the restaurant placeholder
+directly by URL.
 
 ## Backend limitations
 
@@ -68,13 +71,11 @@ restaurant placeholder directly by URL.
 - Menu/profile saves and order mutations make real PATCH/DELETE requests.
   Their persistence and behavior have not been verified. Do not use these
   controls against shared data without intending to change it.
-- Signup separately calls `http://localhost:3007/restaurant` or `/customers`,
-  then posts to `http://localhost:3009/register`. Those services are not
-  included or started here; read-only probes to `/customers` and `/register`
-  refused connections during verification.
-- Signup also validates a password-confirmation value without rendering its
-  input, so valid-password submissions cannot pass that check. The login
-  button has no action. Authentication and route protection are not implemented.
+- Legacy signup referenced `http://localhost:3007/restaurant` or `/customers`
+  and `http://localhost:3009/register`. Those services have no implementation
+  here, read-only probes failed, and no usable registration/login/session
+  contract was found. These requests and the client-side email-list check are
+  no longer made. Live auth submission is unavailable; no login endpoint is guessed.
 - Menu, order, and profile reads surface HTTP, connection, timeout, and
   malformed-response errors with a retry action. Failed requests are distinct
   from genuinely empty or unavailable data.
@@ -193,3 +194,37 @@ restaurant placeholder directly by URL.
   or persistence. Live checks are read-only. Backend documentation/source is
   needed to settle the payload contract; authorization, concurrent editing, and
   durability across restarts remain unverified.
+
+## Signup/login readiness and isolated tests
+
+- `/signup` and `/login` provide labeled fields, appropriate autocomplete,
+  required/email/matching-password validation, associated errors, and working
+  navigation. Signup preserves Customer/Restaurant Owner as a declared intent;
+  it does not grant restaurant permissions. Phone is required without imposing
+  an undocumented format. Passwords have no invented length/composition policy.
+- **No live authentication capability is connected.** Normal routes show an
+  unavailable notice and disabled submission. Even programmatic form submission
+  cannot send credentials through the default adapter. There are no auth HTTP
+  calls, account creation, sessions, tokens, route guards, or signed-in UI state.
+  Existing merchant routes remain accessible as before; frontend navigation
+  does not secure merchant data.
+- Candidate frontend adapter inputs are `{ name, email, phone, password, role }`
+  for signup and `{ email, password }` for login. These are not asserted backend
+  contracts. Confirmation and arbitrary authorization/session fields are excluded.
+  No transport URL is configured until a real service contract is established.
+- Valid submission attempts clear password fields; failures keep non-sensitive
+  fields and require re-entry of secrets. Passwords are never logged or persisted
+  by the app. Duplicate submissions are blocked while pending. Errors do not
+  echo provider messages, and success feedback never claims a session exists.
+- Browser fixture: with Vite running, open `/tests/fixtures/auth.html`. It has an
+  explicit isolated-test banner and injects an in-memory adapter into the same
+  screen component. Its success/failure outcomes create no account, session,
+  HTTP request, or credential storage. It records sanitized call metadata only.
+  Fixture controls exist only in that test entry; normal routes have no query,
+  storage, or environment switch for simulated auth. The production build excludes
+  this entry and its fixture code. Browser checks cover pending/duplicate actions,
+  failure recovery, password clearing, navigation, errors, and keyboard focus.
+- Backend work still needed: documented registration/login responses and error
+  contracts, server password policy and credential handling, account uniqueness,
+  verified session lifecycle, and server-enforced restaurant membership/owner
+  approval. No password reset, social login, or backend authentication is added.
