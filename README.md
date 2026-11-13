@@ -36,6 +36,7 @@ separate backend startup are required to start the frontend itself.
 | `npm run lint` | Check JavaScript and JSX with ESLint. |
 | `npm run test:menu` | Run isolated menu API and validation regression tests with Node's built-in test runner. No live requests are made. |
 | `npm run test:orders` | Run isolated order parsing, transition, mutation, and read-back regression tests. No live requests are made. |
+| `npm run test:profile` | Run isolated profile parsing, validation, save, and read-back regression tests. No live requests are made. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -49,7 +50,7 @@ routes so direct links and refreshes work.
 | `/` | Menu cards, add-food dialog, and confirmed removal. |
 | `/edit-menu` | Select and edit a menu item by ID; card links preselect it with `?item=<id>`. |
 | `/orders` | Incoming orders, preparation status, accept/ready actions, and confirmed decline/deletion. |
-| `/profile` | Restaurant profile and edit dialog. |
+| `/profile` | Restaurant details, refresh/error states, and an accessible editing dialog. |
 | `/signup` | Incomplete customer/restaurant-owner signup form. |
 | `/restaurant/:restaurantId` | Placeholder displaying the restaurant ID, for example `/restaurant/1`. |
 
@@ -74,10 +75,9 @@ restaurant placeholder directly by URL.
 - Signup also validates a password-confirmation value without rendering its
   input, so valid-password submissions cannot pass that check. The login
   button has no action. Authentication and route protection are not implemented.
-- Menu and order reads surface HTTP, connection, timeout, and malformed-response
-  errors with a retry action. The profile helper still falls back to an empty
-  object on some failures; `N/A` profile fields do not establish that the
-  backend has no data.
+- Menu, order, and profile reads surface HTTP, connection, timeout, and
+  malformed-response errors with a retry action. Failed requests are distinct
+  from genuinely empty or unavailable data.
 - The root JSON files are sample data, not automatically loaded fallbacks.
   Although `json-server` is declared, no script launches it, and `server.js`
   is empty. No backend, database, or authentication server runs with Vite.
@@ -164,3 +164,32 @@ restaurant placeholder directly by URL.
 - Order regression tests and browser action checks use isolated/intercepted
   requests for loading, empty, malformed, error/retry, success/failure, and
   duplicate-action cases. Live checks are GET-only and never mutate orders.
+
+## Restaurant profile contract and limitations
+
+- Read-only inspection confirmed a flat `GET /restaurant` response with `id`,
+  `name`, `email`, `location`, `openingHours`, and `cuisineType`. No image field
+  is exposed; the profile uses derived initials rather than adding image fields.
+  Missing values show `Not provided`; null/empty/id-only objects or HTTP 204
+  show an unavailable state. Unexpected nested shapes and invalid field types
+  are errors, not inferred restaurant data.
+- The editor keeps the original five required fields, validates email syntax,
+  and leaves opening hours and cuisine as free text. It snapshots the profile
+  once; refresh is blocked while editing/saving, and late reads cannot replace
+  the draft. Cancel explicitly discards edits. Failed saves retain them.
+- The **write contract remains unverified**. Existing code sends
+  `PATCH /restaurant` with `{ restaurant: { id, name, email, location,
+  openingHours, cuisineType } }` (ID included when supplied by the read).
+  This nested payload is retained. A flat GET does not establish a flat PATCH
+  contract; the client never probes an alternative payload automatically.
+- Save success requires a 2xx response followed by a fresh flat read matching
+  all five trimmed fields and the original ID when present. A nested-only echo,
+  unchanged/partial data, missing profile, or failed read-back is unconfirmed;
+  the draft and previous displayed details remain. No mutation is retried
+  automatically. Check the profile before deciding whether to retry an uncertain
+  save. Each request times out after 20 seconds (up to about 40 for save/read-back).
+- Simulated saves test both successful legacy-payload handling and the mismatch
+  where only a nested object changes. They do not prove live write compatibility
+  or persistence. Live checks are read-only. Backend documentation/source is
+  needed to settle the payload contract; authorization, concurrent editing, and
+  durability across restarts remain unverified.

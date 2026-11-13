@@ -1,5 +1,6 @@
 import { hasUniqueMenuId, menuItemId } from './menu.js';
 import { canChangeOrderStatus, orderKey, parseOrders } from './orders.js';
+import { parseRestaurantProfile, PROFILE_FIELDS, profileValues, validateProfileFields } from './profile.js';
 
 export const BASE_URL = 'https://kilo-eats-backend.onrender.com';
 
@@ -79,18 +80,54 @@ export const menuErrorMessage = (error) => {
   return error.message || 'The menu request failed. Please try again.';
 };
 
-export const fetchRestaurantProfile = async () => {
+export const fetchRestaurantProfile = async ({ signal } = {}) => {
+  const timeout = AbortSignal.timeout(20000);
+  const response = await fetch(`${BASE_URL}/restaurant`, {
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Could not load the restaurant profile (HTTP ${response.status}). Please try again.`);
+  if (response.status === 204) return null;
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error('The profile service returned unreadable restaurant details. Please refresh the profile.'); }
+  return parseRestaurantProfile(data);
+};
+
+export const saveRestaurantProfile = async (original, values) => {
+  const baseline = parseRestaurantProfile(original);
+  if (!baseline) throw new Error('Load an existing restaurant profile before saving.');
+  if (Object.keys(validateProfileFields(values)).length > 0) throw new Error('Check the required profile fields before saving.');
+  const normalized = profileValues(values);
+  const restaurant = { ...(baseline.id != null ? { id: baseline.id } : {}), ...normalized };
+  let response;
   try {
-    const response = await fetch(`${BASE_URL}/restaurant`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch restaurant profile");
-    }
-    const data = await response.json();
-    return data; // Return flat structure { id, name, email, location, openingHours, cuisineType }
-  } catch (error) {
-    console.error("Error fetching restaurant profile:", error);
-    return {};
+    // Preserve the existing nested write. A flat GET is not evidence of a flat
+    // PATCH contract. Never try a different payload as an automatic fallback.
+    response = await fetch(`${BASE_URL}/restaurant`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(20000),
+      body: JSON.stringify({ restaurant }),
+    });
+  } catch {
+    throw new Error('Could not confirm the save. The service may have received your changes. Your draft is kept; check the profile before trying again.');
   }
+  if (!response.ok) throw new Error(`The profile save failed (HTTP ${response.status}). Your draft is kept; no change has been confirmed.`);
+  let verified;
+  try { verified = await fetchRestaurantProfile(); }
+  catch { throw new Error('The service accepted the save, but the profile could not be read back. Your draft is kept. Check the profile before trying again.'); }
+  if (!verified || (baseline.id != null && String(verified.id) !== String(baseline.id))
+    || PROFILE_FIELDS.some(({ key }) => verified[key] !== normalized[key])) {
+    throw new Error('The profile read-back did not match your changes. Your draft is kept. The save contract needs confirmation before retrying.');
+  }
+  return verified;
+};
+
+export const profileErrorMessage = (error) => {
+  if (error?.name === 'TimeoutError') return 'The profile service took too long to respond. Please try again.';
+  if (error instanceof TypeError) return 'The profile service could not be reached. Check your connection and try again.';
+  return error?.message || 'The profile request failed. Please try again.';
 };
 
 export const fetchOrders = async ({ signal } = {}) => {

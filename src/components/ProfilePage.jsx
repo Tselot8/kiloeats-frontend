@@ -1,167 +1,109 @@
-import { useEffect, useState } from "react";
-import { fetchRestaurantProfile } from "../utils/api";
-import "../App.css";
-import { BASE_URL } from "../utils/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchRestaurantProfile, profileErrorMessage, saveRestaurantProfile } from "../utils/api.js";
+import { PROFILE_FIELDS } from "../utils/profile.js";
+import MenuDialog from "./MenuDialog.jsx";
+import ProfileForm from "./ProfileForm.jsx";
 
 const ProfilePage = () => {
-  const [profile, setProfile] = useState({
-    id: "",
-    name: "",
-    email: "",
-    location: "",
-    openingHours: "",
-    cuisineType: "",
-  });
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({ ...profile });
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [editSnapshot, setEditSnapshot] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [success, setSuccess] = useState("");
+  const request = useRef(null);
+  const editing = useRef(false);
+  const inFlight = useRef(false);
 
-  useEffect(() => {
-    const getProfileData = async () => {
-      try {
-        const data = await fetchRestaurantProfile();
-        console.log("Profile data:", data);
-        setProfile(data || {});
-        setEditedProfile(data || {});
-        setError(null);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        setError("Failed to load profile data.");
-      }
-    };
-    getProfileData();
+  const reload = useCallback(async () => {
+    if (editing.current || inFlight.current) return;
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    setLoading(true);
+    setLoadError("");
+    setSuccess("");
+    try {
+      const data = await fetchRestaurantProfile({ signal: controller.signal });
+      if (!controller.signal.aborted && !editing.current) setProfile(data);
+    } catch (error) {
+      if (!controller.signal.aborted) setLoadError(profileErrorMessage(error));
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }, []);
 
-  const handleEditButtonClick = () => {
-    setEditedProfile({ ...profile });
-    setShowEditModal(true);
-    setError(null);
-    setSuccess(null);
-  };
+  useEffect(() => {
+    reload();
+    return () => request.current?.abort();
+  }, [reload]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditedProfile((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const open = () => {
+    if (!profile || loading || inFlight.current || editing.current) return;
+    request.current?.abort();
+    editing.current = true;
+    setEditSnapshot({ ...profile });
+    setSaveError("");
+    setSuccess("");
   };
-
-  const handleSaveChanges = async (e) => {
-    e.preventDefault();
+  const dismiss = () => {
+    if (inFlight.current) return;
+    editing.current = false;
+    setEditSnapshot(null);
+    setSaveError("");
+  };
+  const save = async (values) => {
+    if (inFlight.current || !editing.current || !editSnapshot) return;
+    inFlight.current = true;
+    setSaving(true);
+    setSaveError("");
+    setSuccess("");
     try {
-      const response = await fetch(`${BASE_URL}/restaurant`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurant: editedProfile }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update restaurant profile");
-      }
-
-      setProfile({ ...editedProfile });
-      setShowEditModal(false);
-      setSuccess("Profile updated successfully!");
-      setError(null);
+      const verified = await saveRestaurantProfile(editSnapshot, values);
+      setProfile(verified);
+      setLoadError("");
+      setSuccess("Restaurant profile updated and confirmed.");
+      editing.current = false;
+      setEditSnapshot(null);
     } catch (error) {
-      console.error("Error updating profile:", error);
-      setError("Failed to update profile. Please try again.");
+      setSaveError(profileErrorMessage(error));
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setShowEditModal(false);
-    setEditedProfile({ ...profile });
-    setError(null);
-    setSuccess(null);
-  };
+  const initials = profile?.name
+    ? profile.name.split(/\s+/).slice(0, 2).map((word) => [...word][0]).join("").toUpperCase()
+    : "R";
 
   return (
-    <div className="profile-page">
-      <h2 className="profile-title">Profile</h2>
-      {error && <p className="declined-text">{error}</p>}
-      {success && <p className="success-text">{success}</p>}
-      <div className="profile-edit">
-        <p><strong>Restaurant Name:</strong> {profile.name || "N/A"}</p>
-        <p><strong>Email:</strong> {profile.email || "N/A"}</p>
-        <p><strong>Location:</strong> {profile.location || "N/A"}</p>
-        <p><strong>Opening Hours:</strong> {profile.openingHours || "N/A"}</p>
-        <p><strong>Cuisine Type:</strong> {profile.cuisineType || "N/A"}</p>
-        <button className="edit-profile-button" onClick={handleEditButtonClick}>
-          Edit Profile
-        </button>
-      </div>
-
-      {showEditModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Edit Profile</h3>
-            <form onSubmit={handleSaveChanges}>
-              <p>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Restaurant Name"
-                  value={editedProfile.name || ""}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={editedProfile.email || ""}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Location"
-                  value={editedProfile.location || ""}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="text"
-                  name="openingHours"
-                  placeholder="Opening Hours"
-                  value={editedProfile.openingHours || ""}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <p>
-                <input
-                  type="text"
-                  name="cuisineType"
-                  placeholder="Cuisine Type"
-                  value={editedProfile.cuisineType || ""}
-                  onChange={handleInputChange}
-                  required
-                />
-              </p>
-              <button type="submit" className="form-button">Save Changes</button><br></br>
-              <button
-                type="button"
-                className="close-modal"
-                onClick={handleCloseModal}
-              >
-                Cancel
-              </button>
-            </form>
-          </div>
+    <section className="profile-page" aria-labelledby="profile-heading">
+      <div className="page-header">
+        <div><h2 id="profile-heading">Profile</h2><p className="menu-helper">Manage restaurant contact and service details.</p></div>
+        <div className="profile-page-actions">
+          <button id="profile-refresh" className="button-secondary" onClick={reload} disabled={loading || Boolean(editSnapshot) || saving}>{loading ? "Loading…" : "Refresh profile"}</button>
+          {profile && <button id="profile-edit" className="edit-profile-button" onClick={open} disabled={loading || saving}>Edit profile</button>}
         </div>
+      </div>
+      <p role="status" className="profile-success">{success}</p>
+      {loading && <p className="menu-state" role="status">{profile ? "Refreshing restaurant profile…" : "Loading restaurant profile…"}</p>}
+      {loadError && <div className="menu-feedback menu-feedback-error" role="alert"><p>{loadError}</p>{profile && <p>Showing the last loaded profile.</p>}<button className="button-secondary" onClick={reload} disabled={loading || saving || Boolean(editSnapshot)}>Retry loading profile</button></div>}
+      {!loading && !loadError && !profile && <div className="menu-state profile-unavailable"><h3>Restaurant profile unavailable</h3><p>No restaurant details were returned. Refresh the profile to check again.</p></div>}
+      {profile && (
+        <section className="profile-overview" aria-label="Restaurant details">
+          <div className="profile-identity">
+            <span className="profile-avatar" aria-hidden="true">{initials}</span>
+            <div><p className="profile-eyebrow">Restaurant</p><h3>{profile.name || "Restaurant name not provided"}</h3></div>
+          </div>
+          <dl className="profile-details">
+            {PROFILE_FIELDS.filter(({ key }) => key !== "name").map(({ key, label }) => <div className="profile-detail" key={key}><dt>{label}</dt><dd>{profile[key] || <span className="profile-missing">Not provided</span>}</dd></div>)}
+          </dl>
+        </section>
       )}
-    </div>
+      {editSnapshot && <MenuDialog title="Edit restaurant profile" onDismiss={dismiss} busy={saving} fallbackFocusSelector="#profile-edit, #profile-refresh"><ProfileForm original={editSnapshot} onSave={save} onCancel={dismiss} saving={saving} error={saveError} /></MenuDialog>}
+    </section>
   );
 };
 
