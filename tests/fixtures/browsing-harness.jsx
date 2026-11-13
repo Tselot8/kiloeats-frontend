@@ -9,11 +9,13 @@ import CartConfirmation from '../../src/components/CartConfirmation.jsx';
 import CartFeedback from '../../src/components/CartFeedback.jsx';
 import CartPage from '../../src/components/CartPage.jsx';
 import { getFixtureCartStorage } from './cart-storage.js';
+import IdentityProvider from '../../src/context/IdentityProvider.jsx';
 import { createDemoBrowsingService, studentBrowsing } from '../../src/utils/studentBrowsing.js';
 import '../../src/index.css';
 import '../../src/App.css';
 import '../../src/studentBrowsing.css';
 import '../../src/cart.css';
+import '../../src/identity.css';
 
 // ISOLATED_BROWSING_FIXTURE: never imported by the app/production entry.
 // Controls and deferred results exist only in this separate test document.
@@ -29,6 +31,7 @@ const service = Object.fromEntries(['listRestaurants', 'getRestaurantMenu'].map(
 
 createRoot(document.getElementById('fixture-root')).render(
   <MemoryRouter initialEntries={['/browse?campus=aau-4k']}>
+    <IdentityProvider>
     <CartProvider getStorage={getFixtureCartStorage}>
     <RouteFocus />
     <p style={{ padding: '12px 16px', background: '#24332f', color: 'white', margin: 0 }}>ISOLATED BROWSING TEST: empty, failure and delayed responses. No remote service.</p>
@@ -43,5 +46,6 @@ createRoot(document.getElementById('fixture-root')).render(
     </main>
     <CartConfirmation />
     </CartProvider>
+    </IdentityProvider>
   </MemoryRouter>,
 );

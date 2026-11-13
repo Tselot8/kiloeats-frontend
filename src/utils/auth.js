@@ -1,4 +1,5 @@
 import { isValidEmail } from './validation.js';
+import { findCampus } from './studentBrowsing.js';
 
 // No usable registration/login/session contract is supplied by this repository.
 // Normal routes always use this unavailable adapter. No endpoint is guessed.
@@ -15,7 +16,7 @@ export const validateAuthFields = (mode, values = {}) => {
   else if (!isValidEmail(values.email)) errors.email = 'Enter a valid email address.';
   if (mode === 'signup') {
     if (!text(values.phone)) errors.phone = 'Enter your phone number.';
-    if (!['Customer', 'Restaurant Owner'].includes(values.role)) errors.role = 'Choose Customer or Restaurant owner.';
+    if (!findCampus(values.campusId)) errors.campusId = 'Choose one of the four supported campuses.';
   }
   if (!passwordValue(values.password)) errors.password = 'Enter your password.';
   if (mode === 'signup') {
@@ -30,7 +31,7 @@ export const buildAuthPayload = (mode, values) => {
   if (Object.keys(validateAuthFields(mode, values)).length) throw new Error('Check the required authentication fields.');
   const credentials = { email: text(values.email), password: values.password };
   return mode === 'signup'
-    ? { name: text(values.name), ...credentials, phone: text(values.phone), role: values.role }
+    ? { name: text(values.name), ...credentials, phone: text(values.phone), campusId: values.campusId }
     : credentials;
 };
 

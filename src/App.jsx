@@ -2,6 +2,7 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import "./studentBrowsing.css";
 import "./cart.css";
+import "./identity.css";
 import MenuPage from "./components/MenuPage.jsx";
 import EditMenuPage from "./components/EditMenuPage.jsx";
 import OrdersPage from "./components/OrdersPage.jsx";
@@ -17,10 +18,13 @@ import CartProvider from "./context/CartProvider.jsx";
 import CartPage from "./components/CartPage.jsx";
 import CartFeedback from "./components/CartFeedback.jsx";
 import CartConfirmation from "./components/CartConfirmation.jsx";
+import IdentityProvider from "./context/IdentityProvider.jsx";
+import AccessGate from "./components/AccessGate.jsx";
+import StudentAccountPage from "./components/StudentAccountPage.jsx";
+import AdminPage from "./components/AdminPage.jsx";
 
-const App = () => (
-  <Router>
-    <CartProvider>
+export const AppWorkspace = () => (
+  <>
     <RouteFocus />
     <div className="app">
       <a className="skip-link" href="#main-content">Skip to content</a>
@@ -28,10 +32,12 @@ const App = () => (
       <main id="main-content" className="layout-container app-main" tabIndex={-1}>
         <CartFeedback />
         <Routes>
-          <Route path="/" element={<MenuPage />} />
-          <Route path="/edit-menu" element={<EditMenuPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/" element={<AccessGate area="merchant"><MenuPage /></AccessGate>} />
+          <Route path="/edit-menu" element={<AccessGate area="merchant"><EditMenuPage /></AccessGate>} />
+          <Route path="/orders" element={<AccessGate area="merchant"><OrdersPage /></AccessGate>} />
+          <Route path="/profile" element={<AccessGate area="merchant"><ProfilePage /></AccessGate>} />
+          <Route path="/account" element={<AccessGate area="student"><StudentAccountPage /></AccessGate>} />
+          <Route path="/admin" element={<AccessGate area="admin"><AdminPage /></AccessGate>} />
           <Route path="/browse" element={<StudentBrowsePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
@@ -59,8 +65,9 @@ const App = () => (
       </footer>
     </div>
     <CartConfirmation />
-    </CartProvider>
-  </Router>
+  </>
 );
+
+const App = () => <Router><IdentityProvider><CartProvider><AppWorkspace /></CartProvider></IdentityProvider></Router>;
 
 export default App;

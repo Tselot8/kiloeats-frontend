@@ -1,15 +1,19 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AUTH_SERVICE, submitAuth, validateAuthFields } from "../utils/auth.js";
+import { CAMPUSES } from '../utils/studentBrowsing.js';
+import { safeReturnPath } from '../utils/identity.js';
 
 const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
   const signup = mode === "signup";
+  const [params] = useSearchParams();
+  const requested = safeReturnPath(params.get('returnTo'));
   const prefix = useId();
   const formRef = useRef(null);
   const feedbackRef = useRef(null);
   const inFlight = useRef(false);
   const mounted = useRef(true);
-  const [values, setValues] = useState({ name: "", email: "", phone: "", role: "Customer", password: "", confirmPassword: "" });
+  const [values, setValues] = useState({ name: "", email: "", phone: "", campusId: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -18,7 +22,7 @@ const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
     { name: "name", label: "Name", type: "text", autoComplete: "name" },
     { name: "email", label: "Email", type: "email", autoComplete: "email" },
     { name: "phone", label: "Phone number", type: "tel", autoComplete: "tel" },
-    { name: "role", label: "Account type", type: "select" },
+    { name: "campusId", label: "Campus", type: "select" },
     { name: "password", label: "Password", type: "password", autoComplete: "new-password" },
     { name: "confirmPassword", label: "Confirm password", type: "password", autoComplete: "new-password" },
   ] : [
@@ -68,8 +72,8 @@ const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
     <section className={`auth-page auth-page-${mode}`} aria-labelledby={`${prefix}-heading`}>
       <div className="auth-intro">
         <p className="auth-eyebrow">Your KiloEats account</p>
-        <h2 id={`${prefix}-heading`}>{signup ? "Create your account" : "Welcome back"}</h2>
-        <p>{signup ? "Choose how you plan to use KiloEats." : "Log in with your email and password when sign-in is available."}</p>
+        <h2 id={`${prefix}-heading`}>{signup ? "Create a student account" : "Welcome back"}</h2>
+        <p>{signup ? "Choose your campus to prepare a student registration." : "Shared login for students, restaurant staff and platform admins, when sign-in is available."}</p>
       </div>
       <div className="auth-card">
         {!available && <div className="auth-unavailable" id={`${prefix}-availability`}>
@@ -84,13 +88,12 @@ const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
               const props = {
                 id: `${prefix}-${name}`, name, value: values[name], onChange: change, required: true,
                 "aria-invalid": Boolean(errors[name]),
-                "aria-describedby": [errors[name] ? `${prefix}-${name}-error` : "", name === "role" ? `${prefix}-role-help` : ""].filter(Boolean).join(" ") || undefined,
+                "aria-describedby": errors[name] ? `${prefix}-${name}-error` : undefined,
               };
               return <div className="auth-field" key={name}>
                 <label htmlFor={`${prefix}-${name}`}>{label}</label>
-                {type === "select" ? <select {...props}><option value="Customer">Customer</option><option value="Restaurant Owner">Restaurant owner</option></select>
+                {type === "select" ? <select {...props}><option value="" disabled>Choose your campus</option>{CAMPUSES.map((campus) => <option key={campus.id} value={campus.id}>{campus.name}</option>)}</select>
                   : <input {...props} type={type} autoComplete={autoComplete} inputMode={type === "email" ? "email" : type === "tel" ? "tel" : undefined} autoCapitalize={type === "email" ? "none" : undefined} spellCheck={type === "email" || type === "password" ? false : undefined} />}
-                {name === "role" && <p className="auth-field-help" id={`${prefix}-role-help`}>Restaurant access needs separate authorization.</p>}
                 {errors[name] && <p className="error-text" id={`${prefix}-${name}-error`} role="alert">{errors[name]}</p>}
               </div>;
             })}
@@ -98,7 +101,9 @@ const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
           <button type="submit" className="auth-submit" disabled={!available || submitting}>{submitting ? "Submitting…" : !available ? signup ? "Signup unavailable" : "Login unavailable" : signup ? "Create account" : "Log in"}</button>
           <p className="auth-pending" role="status">{submitting ? "Submitting your request. Please wait." : ""}</p>
         </form>
-        <p className="auth-switch">{signup ? "Already have an account? " : "New to KiloEats? "}<Link to={signup ? "/login" : "/signup"}>{signup ? "Log in" : "Sign up"}</Link></p>
+        <p className="auth-role-explanation">{signup ? 'Restaurant onboarding and admin access are arranged by the platform. Public student signup cannot provision those roles.' : 'A future server-confirmed identity will determine your destination and access. Choosing a role in a form will not grant permissions.'}</p>
+        {!signup && params.has('returnTo') && <p className="auth-role-explanation">An internal return page is remembered for a future supported sign-in flow. Your demo cart remains in this browser. <Link to={requested.startsWith('/cart') || requested.startsWith('/browse') || requested.startsWith('/restaurant/') ? requested : '/browse'}>Continue public browsing</Link></p>}
+        <p className="auth-switch">{signup ? "Already have an account? " : "New to KiloEats? "}<Link to={`${signup ? '/login' : '/signup'}${params.has('returnTo') ? `?returnTo=${encodeURIComponent(requested)}` : ''}`}>{signup ? "Log in" : "Student signup"}</Link></p>
       </div>
     </section>
   );

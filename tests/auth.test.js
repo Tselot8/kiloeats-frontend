@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { AUTH_SERVICE, buildAuthPayload, submitAuth, validateAuthFields } from '../src/utils/auth.js';
 
-const signup = { name: 'Fixture User', email: 'fixture@example.test', phone: '+251 900 000 000', role: 'Customer', password: 'synthetic-password', confirmPassword: 'synthetic-password' };
+const signup = { name: 'Fixture User', email: 'fixture@example.test', phone: '+251 900 000 000', campusId: 'aau-4k', password: 'synthetic-password', confirmPassword: 'synthetic-password' };
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; });
 
 test('signup validates all existing required fields, including confirmation', () => {
-  assert.deepEqual(Object.keys(validateAuthFields('signup')), ['name', 'email', 'phone', 'role', 'password', 'confirmPassword']);
+  assert.deepEqual(Object.keys(validateAuthFields('signup')), ['name', 'email', 'phone', 'campusId', 'password', 'confirmPassword']);
   assert.deepEqual(validateAuthFields('signup', signup), {});
   assert.ok(validateAuthFields('signup', { ...signup, name: ' ', phone: ' ' }).name);
   assert.ok(validateAuthFields('signup', { ...signup, confirmPassword: 'different' }).confirmPassword);
@@ -31,8 +31,9 @@ test('no unsupported length, composition, or phone-format rule is invented', () 
 
 test('signup payload excludes confirmation and arbitrary authorization/session fields', () => {
   const payload = buildAuthPayload('signup', { ...signup, name: ' Fixture User ', email: ' fixture@example.test ', role: 'Restaurant Owner', isAdmin: true, session: 'never forward' });
-  assert.deepEqual(payload, { name: 'Fixture User', email: signup.email, phone: signup.phone, role: 'Restaurant Owner', password: signup.password });
+  assert.deepEqual(payload, { name: 'Fixture User', email: signup.email, phone: signup.phone, campusId: signup.campusId, password: signup.password });
   assert.equal(Object.hasOwn(payload, 'confirmPassword'), false);
+  assert.equal(Object.hasOwn(payload, 'role'), false);
 });
 
 test('login payload contains only email and the exact untrimmed password', () => {
@@ -40,8 +41,8 @@ test('login payload contains only email and the exact untrimmed password', () =>
   assert.deepEqual(buildAuthPayload('login', { ...signup, email: ' fixture@example.test ', password }), { email: signup.email, password });
 });
 
-test('invalid payloads, roles, and modes cannot be submitted as valid inputs', () => {
-  assert.throws(() => buildAuthPayload('signup', { ...signup, role: 'Administrator' }), /required authentication fields/);
+test('invalid campuses, payloads, and modes cannot be submitted as valid inputs', () => {
+  assert.throws(() => buildAuthPayload('signup', { ...signup, campusId: 'unknown-campus' }), /required authentication fields/);
   assert.throws(() => buildAuthPayload('login', {}), /required authentication fields/);
   assert.throws(() => buildAuthPayload('other', signup), /Unsupported/);
 });

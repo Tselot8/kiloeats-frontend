@@ -4,10 +4,12 @@ import AuthScreen from "../../src/components/AuthScreen.jsx";
 import AppHeader from "../../src/components/AppHeader.jsx";
 import CartProvider from "../../src/context/CartProvider.jsx";
 import { getFixtureCartStorage } from './cart-storage.js';
+import IdentityProvider from '../../src/context/IdentityProvider.jsx';
 import "../../src/index.css";
 import "../../src/App.css";
 import "../../src/studentBrowsing.css";
 import "../../src/cart.css";
+import "../../src/identity.css";
 
 // ISOLATED_AUTH_FIXTURE: this entry is not imported by the app or production build.
 // Only synthetic test values belong here. There are no HTTP requests or sessions.
@@ -18,7 +20,7 @@ const service = {
   async submit(mode, payload) {
     const outcome = fixture.outcome;
     // Record metadata only. Never record a password or the full payload.
-    fixture.calls.push({ mode, keys: Object.keys(payload), role: payload.role, email: payload.email,
+    fixture.calls.push({ mode, keys: Object.keys(payload), campusId: payload.campusId, email: payload.email,
       hasPassword: typeof payload.password === "string" && payload.password.length > 0,
       confirmationIncluded: Object.hasOwn(payload, "confirmPassword") });
     await new Promise((resolve) => setTimeout(resolve, fixture.delayMs));
@@ -28,6 +30,7 @@ const service = {
 
 createRoot(document.getElementById("fixture-root")).render(
   <MemoryRouter initialEntries={["/signup"]}>
+    <IdentityProvider>
     <CartProvider getStorage={getFixtureCartStorage}>
     <p style={{ margin: 0, padding: "12px 16px", background: "#24332f", color: "white" }}>ISOLATED AUTH TEST: outcomes are simulated. No account or session is created.</p>
     <div className="app">
@@ -40,5 +43,6 @@ createRoot(document.getElementById("fixture-root")).render(
       </main>
     </div>
     </CartProvider>
+    </IdentityProvider>
   </MemoryRouter>,
 );

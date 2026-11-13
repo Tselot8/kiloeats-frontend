@@ -68,6 +68,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:reliability` | Check API URL validation and distinguish HTTP, malformed, network/body-download, timeout, and empty-data outcomes. |
 | `npm run test:browsing` | Check demo campus filtering, menu lookup, availability, invalid links, isolated snapshots, and cancellation. |
 | `npm run test:cart` | Check quantities, integer money, replacement confirmation, restoration, catalog changes, and storage failures. |
+| `npm run test:identity` | Check identity/route rules, verification states, safe returns, student-only signup payloads, and isolated role-network behavior. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -82,16 +83,20 @@ routes so direct links and refreshes work.
 | `/edit-menu` | Select and edit a menu item by ID; card links preselect it with `?item=<id>`. |
 | `/orders` | Incoming orders, preparation status, accept/ready actions, and confirmed decline/deletion. |
 | `/profile` | Restaurant details, refresh/error states, and an accessible editing dialog. |
-| `/signup` | Customer/restaurant-owner signup UI with validation; live submission unavailable. |
+| `/signup` | Student registration UI with one of the four campuses; live submission unavailable. |
 | `/login` | Matching email/password login UI; live submission unavailable. |
 | `/browse?campus=<id>` | Student restaurant discovery with URL-based campus selection and explicit demo data. |
 | `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
 | `/cart` | Single-restaurant/campus demo cart, quantities, removals, food subtotal, and unquoted delivery fee. |
-| Any unknown path | Accessible not-found screen with Menu and Orders recovery links. |
+| `/account` | Student account and verification status; student identity required. |
+| `/admin` | Reserved admin placeholder; admin identity required. No review dashboard. |
+| Any unknown path | Accessible not-found screen with public browsing/cart recovery, or Menu/Orders for assigned staff. |
 
-The main navigation links to Browse restaurants, Cart (total quantity), Menu, Orders, and Profile,
-with a separate Log in entry. Signup and login link to each other. Student and
-merchant navigation do not provide authorization or protect merchant routes.
+Navigation follows the current frontend identity: public browsing/cart for
+everyone, student account for students, Menu/Orders/Profile for assigned staff,
+and the reserved admin entry for admins. Shared login remains unavailable.
+Frontend gates prevent denied components from mounting; they do not secure the
+backend or establish restaurant ownership. Normal operation is always guest.
 
 Client-side page navigation updates the document title and focuses the new page
 heading. Initial direct loads preserve normal keyboard entry through the skip
@@ -241,16 +246,17 @@ the router's case/trailing-slash matching.
 
 - `/signup` and `/login` provide labeled fields, appropriate autocomplete,
   required/email/matching-password validation, associated errors, and working
-  navigation. Signup preserves Customer/Restaurant Owner as a declared intent;
-  it does not grant restaurant permissions. Phone is required without imposing
+  navigation. Signup registers student intent and requires an agreed campus;
+  there is no public role selector. Restaurant/admin access must be provisioned
+  by the platform. Phone is required without imposing
   an undocumented format. Passwords have no invented length/composition policy.
 - **No live authentication capability is connected.** Normal routes show an
   unavailable notice and disabled submission. Even programmatic form submission
   cannot send credentials through the default adapter. There are no auth HTTP
-  calls, account creation, sessions, tokens, route guards, or signed-in UI state.
-  Existing merchant routes remain accessible as before; frontend navigation
-  does not secure merchant data.
-- Candidate frontend adapter inputs are `{ name, email, phone, password, role }`
+  calls, account creation, sessions, tokens, or real signed-in state. Frontend
+  route gates now show login-required/access-denied states and leave denied
+  merchant components unmounted, so those visits issue no merchant requests.
+- Candidate frontend adapter inputs are `{ name, email, phone, password, campusId }`
   for signup and `{ email, password }` for login. These are not asserted backend
   contracts. Confirmation and arbitrary authorization/session fields are excluded.
   No transport URL is configured until a real service contract is established.
@@ -273,7 +279,7 @@ the router's case/trailing-slash matching.
 
 ## Frontend reliability verification
 
-- Build, lint, and all 112 isolated regression tests pass. Tests intercept fetch;
+- Build, lint, and all 129 isolated regression tests pass. Tests intercept fetch;
   the suite never creates accounts or changes the live service. New coverage
   checks API configuration, interrupted body downloads, and distinct HTTP,
   malformed, timeout, and valid empty responses across all three resources.
@@ -378,3 +384,62 @@ the router's case/trailing-slash matching.
   server validation, and order creation remain unimplemented. Checkout still
   needs agreed distance bands/fees below 100 ETB, campus drop-offs/handoff,
   fee quotation timing, and supported student authentication/order contracts.
+
+## Identity, route access, and proposed student verification
+
+`src/utils/identity.js` defines a frontend adapter shape; it is not an asserted
+backend session endpoint. `IdentityProvider` supports loading, ready guest,
+student, assigned restaurant staff, admin, and unavailable/unknown identity.
+The normal adapter resolves guest without a network call. URL parameters,
+local-storage roles, and signup values cannot create a session or enable roles.
+There is no automatic successful-login redirect. A future server identity must
+choose an authorized destination; return paths are limited to known internal
+routes and non-sensitive campus/item query parameters.
+
+| Routes | Guest | Student (any verification state) | Assigned restaurant staff | Admin |
+| --- | --- | --- | --- | --- |
+| `/browse`, `/restaurant/:id`, `/cart`, `/login`, `/signup` | Public | Public | Public | Public |
+| `/account` | Login required | Allowed | Denied | Denied |
+| `/`, `/edit-menu`, `/orders`, `/profile` | Login required | Denied | Allowed | Denied |
+| `/admin` | Login required | Denied | Denied | Placeholder allowed |
+
+Loading/unknown/failed identity never opens protected components. Public
+browsing/cart remain usable. Staff require a non-empty assigned restaurant ID,
+displayed in the header. **This is frontend behavior, not backend security.**
+The legacy merchant API remains global/unscoped and unchanged; an assignment
+label and hidden navigation do not enforce ownership or protect raw endpoints.
+Do not connect a real staff session until the backend can enforce that mapping.
+
+The student account page shows Not submitted, Pending, Verified, and Rejected,
+including a supplied rejection reason and future resubmission guidance. Only
+verified student identity is marked as future order-eligible; no state enables
+checkout or order submission here. University-email verification and manual
+student-ID review are **proposals**: no approved domains, enrollment guarantee,
+review timeframe, upload endpoint, or email ownership flow is invented. Email
+control alone does not establish current enrollment. Live verification is
+unavailable, with no file input or real evidence collection/storage.
+
+With Vite running, `/tests/fixtures/roles.html` demonstrates all identities,
+verification states, failed/loading identity, and synthetic submission and
+resubmission. It mounts the same application routes. Its fetch implementation
+is installed before merchant components mount and resolves known merchant reads
+and writes entirely in memory, rejecting every other fetch without a network
+fallback. All records and submissions are synthetic. There is no normal-route
+query/environment/storage switch for these roles. This entry, network mock,
+and role controls are excluded from production. Existing browser harnesses use
+guest identity and their own in-memory cart storage.
+
+Headless Edge checks covered guest/student/staff/admin navigation, direct URL
+gates, all verification states, failed and duplicate synthetic submissions,
+keyboard focus, and overflow at 360, 390, 768, and 1440px. Guest gates were also
+checked in production preview. Denied visits made zero merchant requests;
+authorized fixture writes stayed in memory. No real credentials or IDs were
+sent. Physical-device and screen-reader audits remain unperformed.
+
+Backend work still required: a documented session contract/lifecycle; server-
+enforced roles, staff provisioning and restaurant ownership on every request;
+student enrollment eligibility/expiry and re-verification rules; approved email
+policy; accepted ID/evidence types; authorized reviewers, rejection/resubmission
+and appeal rules; private evidence upload/storage/access; and retention/deletion
+policy. No real IDs, credentials, or live writes are used to demonstrate these
+screens. Admin review tools belong to a later milestone.

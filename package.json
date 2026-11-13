@@ -8,14 +8,15 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test tests/menu-api.test.js tests/orders-api.test.js tests/profile-api.test.js tests/auth.test.js tests/reliability.test.js tests/student-browsing.test.js tests/cart.test.js",
+    "test": "node --test tests/menu-api.test.js tests/orders-api.test.js tests/profile-api.test.js tests/auth.test.js tests/reliability.test.js tests/student-browsing.test.js tests/cart.test.js tests/identity.test.js",
     "test:menu": "node --test tests/menu-api.test.js",
     "test:orders": "node --test tests/orders-api.test.js",
     "test:profile": "node --test tests/profile-api.test.js",
     "test:auth": "node --test tests/auth.test.js",
     "test:reliability": "node --test tests/reliability.test.js",
     "test:browsing": "node --test tests/student-browsing.test.js",
-    "test:cart": "node --test tests/cart.test.js"
+    "test:cart": "node --test tests/cart.test.js",
+    "test:identity": "node --test tests/identity.test.js"
   },
   "dependencies": {
     "json-server": "^1.0.0-beta.3",
