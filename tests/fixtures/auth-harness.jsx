@@ -2,8 +2,12 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AuthScreen from "../../src/components/AuthScreen.jsx";
 import AppHeader from "../../src/components/AppHeader.jsx";
+import CartProvider from "../../src/context/CartProvider.jsx";
+import { getFixtureCartStorage } from './cart-storage.js';
 import "../../src/index.css";
 import "../../src/App.css";
+import "../../src/studentBrowsing.css";
+import "../../src/cart.css";
 
 // ISOLATED_AUTH_FIXTURE: this entry is not imported by the app or production build.
 // Only synthetic test values belong here. There are no HTTP requests or sessions.
@@ -24,6 +28,7 @@ const service = {
 
 createRoot(document.getElementById("fixture-root")).render(
   <MemoryRouter initialEntries={["/signup"]}>
+    <CartProvider getStorage={getFixtureCartStorage}>
     <p style={{ margin: 0, padding: "12px 16px", background: "#24332f", color: "white" }}>ISOLATED AUTH TEST: outcomes are simulated. No account or session is created.</p>
     <div className="app">
       <AppHeader />
@@ -34,5 +39,6 @@ createRoot(document.getElementById("fixture-root")).render(
         </Routes>
       </main>
     </div>
+    </CartProvider>
   </MemoryRouter>,
 );

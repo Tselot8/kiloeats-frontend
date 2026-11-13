@@ -1,6 +1,7 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import "./studentBrowsing.css";
+import "./cart.css";
 import MenuPage from "./components/MenuPage.jsx";
 import EditMenuPage from "./components/EditMenuPage.jsx";
 import OrdersPage from "./components/OrdersPage.jsx";
@@ -12,20 +13,27 @@ import AppHeader from "./components/AppHeader.jsx";
 import NotFoundPage from "./components/NotFoundPage.jsx";
 import RouteFocus from "./components/RouteFocus.jsx";
 import StudentBrowsePage from "./components/StudentBrowsePage.jsx";
+import CartProvider from "./context/CartProvider.jsx";
+import CartPage from "./components/CartPage.jsx";
+import CartFeedback from "./components/CartFeedback.jsx";
+import CartConfirmation from "./components/CartConfirmation.jsx";
 
 const App = () => (
   <Router>
+    <CartProvider>
     <RouteFocus />
     <div className="app">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <AppHeader />
       <main id="main-content" className="layout-container app-main" tabIndex={-1}>
+        <CartFeedback />
         <Routes>
           <Route path="/" element={<MenuPage />} />
           <Route path="/edit-menu" element={<EditMenuPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/browse" element={<StudentBrowsePage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -50,6 +58,8 @@ const App = () => (
         </div>
       </footer>
     </div>
+    <CartConfirmation />
+    </CartProvider>
   </Router>
 );
 

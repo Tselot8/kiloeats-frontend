@@ -4,6 +4,7 @@ import { useStudentBrowsing } from '../hooks/useStudentBrowsing.js';
 import { browsePath, findCampus, restaurantPath } from '../utils/studentBrowsing.js';
 import { CampusCoverage, CampusSelect, StudentDemoNotice } from './StudentBrowsingShared.jsx';
 import FoodImage from './FoodImage.jsx';
+import { useCart } from '../context/CartContext.js';
 
 const RestaurantDetailsWrapper = ({ service }) => {
   const { restaurantId } = useParams();
@@ -13,6 +14,7 @@ const RestaurantDetailsWrapper = ({ service }) => {
   const headingRef = useRef(null);
   const { status, data, retry, notFound } = useStudentBrowsing('menu', campusId, restaurantId, service);
   const restaurant = data?.restaurant;
+  const { add } = useCart();
   return (
     <section className="student-page" aria-labelledby="student-menu-title">
       <div className="student-menu-page-heading"><h2 ref={headingRef} tabIndex={-1} id="student-menu-title">Restaurant menu</h2><Link className="button-link button-secondary student-back-link" to={browsePath(campusId)}>Back to restaurants</Link></div>
@@ -31,7 +33,7 @@ const RestaurantDetailsWrapper = ({ service }) => {
           <div className="student-results-heading"><h3 id="student-food-heading">Sample menu for {data.campus.name}</h3><p>Illustrative prices in ETB</p></div>
           {data.items.length === 0 ? <div className="menu-state"><h4>No food listed yet</h4><p>This restaurant’s sample menu is empty. Try another demo restaurant.</p></div> : <div className="student-food-grid">
             {data.items.map((item) => <article key={item.id} className={`student-food-card${item.available ? '' : ' student-food-unavailable'}`}>
-              <FoodImage src={item.image} name={item.name} /><div className="student-food-body"><h4>{item.name}</h4><p>{item.description}</p><div className="student-food-meta"><span className="student-food-price">{new Intl.NumberFormat('en-ET', { maximumFractionDigits: 2 }).format(item.price)} ETB</span><span className={`student-food-availability${item.available ? ' is-available' : ''}`}>{item.available ? 'Available' : 'Unavailable'}</span></div>{!item.available && <p className="student-unavailable-note">Not available on this sample menu.</p>}</div>
+              <FoodImage src={item.image} name={item.name} /><div className="student-food-body"><h4>{item.name}</h4><p>{item.description}</p><div className="student-food-meta"><span className="student-food-price">{new Intl.NumberFormat('en-ET', { maximumFractionDigits: 2 }).format(item.price)} ETB</span><span className={`student-food-availability${item.available ? ' is-available' : ''}`}>{item.available ? 'Available' : 'Unavailable'}</span></div>{item.available ? <button className="student-add-to-cart" type="button" aria-label={`Add to cart: ${item.name}`} onClick={() => add({ restaurantId: restaurant.id, campusId: data.campus.id, itemId: item.id })}>Add to cart</button> : <p className="student-unavailable-note">Unavailable food cannot be added to the demo cart.</p>}</div>
             </article>)}
           </div>}
         </section>}

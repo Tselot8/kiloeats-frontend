@@ -3,8 +3,8 @@
 React 18, React Router 7, and Vite 6 frontend for KiloEats, a university food
 delivery project. The existing interface primarily manages restaurant menus,
 incoming orders, and restaurant profiles. A separate student demo lets you
-browse synthetic restaurants and menus by campus. Cart and checkout flows are
-not implemented.
+browse synthetic restaurants and menus by campus and manage a persisted demo
+cart. Checkout and order submission are not implemented.
 
 ## Prerequisites
 
@@ -67,6 +67,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:auth` | Run isolated auth validation, payload, availability, and adapter-failure tests. No live requests are made. |
 | `npm run test:reliability` | Check API URL validation and distinguish HTTP, malformed, network/body-download, timeout, and empty-data outcomes. |
 | `npm run test:browsing` | Check demo campus filtering, menu lookup, availability, invalid links, isolated snapshots, and cancellation. |
+| `npm run test:cart` | Check quantities, integer money, replacement confirmation, restoration, catalog changes, and storage failures. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -85,9 +86,10 @@ routes so direct links and refreshes work.
 | `/login` | Matching email/password login UI; live submission unavailable. |
 | `/browse?campus=<id>` | Student restaurant discovery with URL-based campus selection and explicit demo data. |
 | `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
+| `/cart` | Single-restaurant/campus demo cart, quantities, removals, food subtotal, and unquoted delivery fee. |
 | Any unknown path | Accessible not-found screen with Menu and Orders recovery links. |
 
-The main navigation links to Browse restaurants, Menu, Orders, and Profile,
+The main navigation links to Browse restaurants, Cart (total quantity), Menu, Orders, and Profile,
 with a separate Log in entry. Signup and login link to each other. Student and
 merchant navigation do not provide authorization or protect merchant routes.
 
@@ -271,7 +273,7 @@ the router's case/trailing-slash matching.
 
 ## Frontend reliability verification
 
-- Build, lint, and all 86 isolated regression tests pass. Tests intercept fetch;
+- Build, lint, and all 112 isolated regression tests pass. Tests intercept fetch;
   the suite never creates accounts or changes the live service. New coverage
   checks API configuration, interrupted body downloads, and distinct HTTP,
   malformed, timeout, and valid empty responses across all three resources.
@@ -314,8 +316,9 @@ the router's case/trailing-slash matching.
   these client data shapes are not an asserted backend contract.
 - Unsupported campuses, unknown restaurant IDs, unsupported campus/restaurant
   combinations, empty menus, and unavailable menus have separate recovery
-  states. Unavailable foods stay visible and labeled. No cart, add-to-cart,
-  checkout, order submission, authentication, map, or geolocation is implemented.
+  states. Unavailable foods stay visible and labeled and cannot be added to the
+  cart. Checkout, order submission, live authentication, maps, and geolocation
+  are not implemented.
 - `tests/fixtures/browsing.html` is a separate development-only test entry for
   empty discovery, failed/deferred reads, explicit retries, and stale-result
   handling. Normal routes cannot enable its controls through query parameters
@@ -333,3 +336,45 @@ the router's case/trailing-slash matching.
   Establish documented student read/order contracts, server approval/membership
   enforcement, and cancellation/acceptance race handling. No operational pricing
   formula or new order-state API is implemented here.
+
+## Demo cart
+
+- Available sample foods can be added from a campus-specific menu. `/cart`
+  shows the restaurant, campus, unit prices, positive whole-number quantities,
+  line totals, and **food subtotal** in ETB. Quantities can be updated, individual
+  items removed, and the cart cleared after confirmation. There is no checkout
+  action; delivery is **not yet quoted**, not assumed free or included in a final
+  payable total.
+- One cart holds one restaurant and one campus. Adding from either a different
+  restaurant or campus asks before replacing all items. Cancel/Escape preserves
+  the original cart; confirmation rechecks the selected food and adds it once.
+  Browsing another campus alone never changes the cart. Clearing returns focus
+  to the cart heading when its original button is removed.
+- `src/utils/cart.js` owns validation, minor-unit arithmetic, restoration, and
+  the reducer. `src/context/CartProvider.jsx` supplies a small React context.
+  Values use integer minor units (100 per ETB), safe integer quantities/totals,
+  and prices with at most two decimal places. Invalid/overflowing values are
+  rejected; current item IDs, names, prices, and availability come from the demo
+  catalog, not caller-provided item metadata.
+- Only the versioned, non-sensitive cart is saved under
+  `kiloeats.demoCart.v1`: restaurant/campus/item IDs, quantities, last-known food
+  names, and unit prices in minor units. No credentials, session data, delivery
+  addresses, or other storage keys are read or written. On refresh, records are
+  checked against the catalog; malformed/duplicate/missing/unavailable entries
+  are removed with visible notices, and repricing shows the old/new unit price
+  before the recalculated subtotal is used. Saved metadata never overrides the
+  catalog. Sanitized results are saved back when storage permits.
+- If storage cannot be read, this tab uses an in-memory cart and avoids
+  overwriting unreadable saved data. Save/clear failures retain the usable
+  in-memory state and warn that refresh may restore an older cart. Storage
+  persistence is best-effort and carts are not synchronized between open tabs.
+  Browser harnesses use separate in-memory adapters, not the normal cart key.
+- Tests and browser checks use only the local demo catalog, seeded non-sensitive
+  cart data, isolated storage failures, and intercepted merchant GETs. Cart
+  operations send no API requests. Headless Edge journey, keyboard/focus, and
+  replacement/cancel checks passed at 360, 390, 768, and 1440px in development
+  and production preview. Development checks also verified refresh, restoration
+  notices, and storage failures. Live auth, price/availability guarantees,
+  server validation, and order creation remain unimplemented. Checkout still
+  needs agreed distance bands/fees below 100 ETB, campus drop-offs/handoff,
+  fee quotation timing, and supported student authentication/order contracts.

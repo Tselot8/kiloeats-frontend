@@ -1,5 +1,6 @@
 import { Link, useMatch, useSearchParams } from "react-router-dom";
 import { browsePath } from "../utils/studentBrowsing.js";
+import { useCart } from "../context/CartContext.js";
 
 const AppHeader = () => {
   const home = useMatch("/");
@@ -10,11 +11,17 @@ const AppHeader = () => {
   const login = useMatch("/login");
   const signup = useMatch("/signup");
   const browsing = useMatch("/browse");
+  const cartRoute = useMatch("/cart");
+  const { cart, context, totals } = useCart();
   const [params] = useSearchParams();
-  const studentView = Boolean(browsing || restaurant);
-  const browseLink = browsePath(params.get("campus"));
+  const studentView = Boolean(browsing || restaurant || cartRoute);
+  const campusId = cartRoute ? cart?.campusId || context?.campusId || params.get("campus") : params.get("campus");
+  const browseLink = browsePath(campusId);
+  const cartCampus = cart?.campusId || campusId;
+  const cartLink = `/cart${browsePath(cartCampus).includes('?') ? `?campus=${encodeURIComponent(cartCampus)}` : ''}`;
   const navigation = [
-    { to: browseLink, label: "Browse restaurants", active: studentView },
+    { to: browseLink, label: "Browse restaurants", active: browsing || restaurant },
+    { to: cartLink, label: `Cart (${totals.quantity})`, active: cartRoute, isCart: true },
     { to: "/", label: "Menu", active: home || editMenu },
     { to: "/orders", label: "Orders", active: orders },
     { to: "/profile", label: "Profile", active: profile },
@@ -34,8 +41,8 @@ const AppHeader = () => {
         </div>
         <div className="header-navigation">
           <nav className="primary-nav" aria-label="Main navigation">
-            {navigation.map(({ to, label, active }) => (
-              <Link key={to} to={to} className="nav-link" aria-current={active ? "page" : undefined}>
+            {navigation.map(({ to, label, active, isCart }) => (
+              <Link key={isCart ? 'cart' : to} to={to} className={`nav-link${isCart ? ' cart-link' : ''}`} aria-current={active ? "page" : undefined}>
                 {label}
               </Link>
             ))}
