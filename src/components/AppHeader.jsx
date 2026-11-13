@@ -1,12 +1,17 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useMatch } from "react-router-dom";
 
 const AppHeader = () => {
-  const { pathname } = useLocation();
-  const menuActive = pathname === "/" || pathname === "/edit-menu" || pathname.startsWith("/restaurant/");
+  const home = useMatch("/");
+  const editMenu = useMatch("/edit-menu");
+  const restaurant = useMatch("/restaurant/:restaurantId");
+  const orders = useMatch("/orders");
+  const profile = useMatch("/profile");
+  const login = useMatch("/login");
+  const signup = useMatch("/signup");
   const navigation = [
-    { to: "/", label: "Menu", active: menuActive },
-    { to: "/orders", label: "Orders", active: pathname === "/orders" },
-    { to: "/profile", label: "Profile", active: pathname === "/profile" },
+    { to: "/", label: "Menu", active: home || editMenu || restaurant },
+    { to: "/orders", label: "Orders", active: orders },
+    { to: "/profile", label: "Profile", active: profile },
   ];
 
   return (
@@ -29,7 +34,7 @@ const AppHeader = () => {
               </Link>
             ))}
           </nav>
-          <Link to="/login" className={`button-link button-secondary account-link${["/signup", "/login"].includes(pathname) ? " is-current" : ""}`} aria-current={pathname === "/login" ? "page" : undefined}>Log in</Link>
+          <Link to="/login" className={`button-link button-secondary account-link${signup || login ? " is-current" : ""}`} aria-current={login ? "page" : undefined}>Log in</Link>
         </div>
       </div>
     </header>

@@ -8,9 +8,12 @@ import RestaurantDetailsWrapper from "./components/RestaurantDetailsWrapper.jsx"
 import SignUpPage from "./components/SignUpPage.jsx";
 import LoginPage from "./components/LoginPage.jsx";
 import AppHeader from "./components/AppHeader.jsx";
+import NotFoundPage from "./components/NotFoundPage.jsx";
+import RouteFocus from "./components/RouteFocus.jsx";
 
 const App = () => (
   <Router>
+    <RouteFocus />
     <div className="app">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <AppHeader />
@@ -23,6 +26,7 @@ const App = () => (
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <footer className="main-footer">

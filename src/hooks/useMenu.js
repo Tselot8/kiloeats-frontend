@@ -28,5 +28,10 @@ export const useMenu = () => {
     return () => request.current?.abort();
   }, [reload]);
 
-  return { items, setItems, loading, loadError, reload };
+  const setConfirmedItems = useCallback((menu) => {
+    setItems(menu);
+    setLoadError("");
+  }, []);
+
+  return { items, setItems: setConfirmedItems, loading, loadError, reload };
 };

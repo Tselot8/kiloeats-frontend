@@ -8,10 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node --test tests/menu-api.test.js tests/orders-api.test.js tests/profile-api.test.js tests/auth.test.js tests/reliability.test.js",
     "test:menu": "node --test tests/menu-api.test.js",
     "test:orders": "node --test tests/orders-api.test.js",
     "test:profile": "node --test tests/profile-api.test.js",
-    "test:auth": "node --test tests/auth.test.js"
+    "test:auth": "node --test tests/auth.test.js",
+    "test:reliability": "node --test tests/reliability.test.js"
   },
   "dependencies": {
     "json-server": "^1.0.0-beta.3",

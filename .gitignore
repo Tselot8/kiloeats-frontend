@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Frontend configuration is public; keep local environment files untracked.
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

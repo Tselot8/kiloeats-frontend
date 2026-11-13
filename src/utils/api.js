@@ -1,19 +1,14 @@
 import { hasUniqueMenuId, menuItemId } from './menu.js';
 import { canChangeOrderStatus, orderKey, parseOrders } from './orders.js';
 import { parseRestaurantProfile, PROFILE_FIELDS, profileValues, validateProfileFields } from './profile.js';
-
-export const BASE_URL = 'https://kilo-eats-backend.onrender.com';
+import { merchantRequest, readJson, serviceErrorMessage } from './http.js';
 
 const readMenuResource = async (signal) => {
-  const timeout = AbortSignal.timeout(20000);
-  const response = await fetch(`${BASE_URL}/item`, {
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    cache: 'no-store',
+  const response = await merchantRequest('/item', {
+    signal,
+    httpError: (status) => `Could not load the menu (HTTP ${status}).`,
   });
-  if (!response.ok) throw new Error(`Could not load the menu (HTTP ${response.status}).`);
-  let resource;
-  try { resource = await response.json(); }
-  catch { throw new Error('The menu service returned an unreadable menu. Please try again.'); }
+  const resource = await readJson(response, 'The menu service returned an unreadable menu. Please try again.');
   const items = resource?.item?.menu?.menuItems;
   if (!Array.isArray(items) || items.some((item) => !item || typeof item !== 'object' || Array.isArray(item)
     || ['name', 'description', 'image'].some((field) => item[field] != null && typeof item[field] !== 'string'))) {
@@ -32,20 +27,12 @@ const changeMenu = async (transform) => {
   // and preserve nested metadata, but concurrent writes still require backend support.
   const { resource, items } = await readMenuResource();
   const updatedMenu = transform(items);
-  let response;
-  try {
-    response = await fetch(`${BASE_URL}/item`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(20000),
-      body: JSON.stringify({
-        item: { ...resource.item, menu: { ...resource.item.menu, menuItems: updatedMenu } },
-      }),
-    });
-  } catch {
-    throw new Error('Could not confirm the save. Your input is kept. Check the menu before retrying; the service may have received the change.');
-  }
-  if (!response.ok) throw new Error(`Changes were not saved (HTTP ${response.status}). Please try again.`);
+  await merchantRequest('/item', {
+    method: 'PATCH',
+    json: { item: { ...resource.item, menu: { ...resource.item.menu, menuItems: updatedMenu } } },
+    uncertainMessage: 'Could not confirm the save. Your input is kept. Check the menu before retrying; the service may have received the change.',
+    httpError: (status) => `Changes were not saved (HTTP ${status}). Please try again.`,
+  });
   return updatedMenu;
 };
 
@@ -74,23 +61,15 @@ export const removeMenuItem = (id) => changeMenu((items) => {
   return items.filter((_, position) => position !== index);
 });
 
-export const menuErrorMessage = (error) => {
-  if (error.name === 'TimeoutError') return 'The menu service took too long to respond. Please try again.';
-  if (error instanceof TypeError) return 'The menu service could not be reached. Check your connection and try again.';
-  return error.message || 'The menu request failed. Please try again.';
-};
+export const menuErrorMessage = (error) => serviceErrorMessage(error, 'menu');
 
 export const fetchRestaurantProfile = async ({ signal } = {}) => {
-  const timeout = AbortSignal.timeout(20000);
-  const response = await fetch(`${BASE_URL}/restaurant`, {
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    cache: 'no-store',
+  const response = await merchantRequest('/restaurant', {
+    signal,
+    httpError: (status) => `Could not load the restaurant profile (HTTP ${status}). Please try again.`,
   });
-  if (!response.ok) throw new Error(`Could not load the restaurant profile (HTTP ${response.status}). Please try again.`);
   if (response.status === 204) return null;
-  let data;
-  try { data = await response.json(); }
-  catch { throw new Error('The profile service returned unreadable restaurant details. Please refresh the profile.'); }
+  const data = await readJson(response, 'The profile service returned unreadable restaurant details. Please refresh the profile.');
   return parseRestaurantProfile(data);
 };
 
@@ -100,20 +79,13 @@ export const saveRestaurantProfile = async (original, values) => {
   if (Object.keys(validateProfileFields(values)).length > 0) throw new Error('Check the required profile fields before saving.');
   const normalized = profileValues(values);
   const restaurant = { ...(baseline.id != null ? { id: baseline.id } : {}), ...normalized };
-  let response;
-  try {
-    // Preserve the existing nested write. A flat GET is not evidence of a flat
-    // PATCH contract. Never try a different payload as an automatic fallback.
-    response = await fetch(`${BASE_URL}/restaurant`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(20000),
-      body: JSON.stringify({ restaurant }),
-    });
-  } catch {
-    throw new Error('Could not confirm the save. The service may have received your changes. Your draft is kept; check the profile before trying again.');
-  }
-  if (!response.ok) throw new Error(`The profile save failed (HTTP ${response.status}). Your draft is kept; no change has been confirmed.`);
+  // Preserve the existing nested write. A flat GET is not evidence of a flat
+  // PATCH contract. Never try a different payload as an automatic fallback.
+  await merchantRequest('/restaurant', {
+    method: 'PATCH', json: { restaurant },
+    uncertainMessage: 'Could not confirm the save. The service may have received your changes. Your draft is kept; check the profile before trying again.',
+    httpError: (status) => `The profile save failed (HTTP ${status}). Your draft is kept; no change has been confirmed.`,
+  });
   let verified;
   try { verified = await fetchRestaurantProfile(); }
   catch { throw new Error('The service accepted the save, but the profile could not be read back. Your draft is kept. Check the profile before trying again.'); }
@@ -124,22 +96,14 @@ export const saveRestaurantProfile = async (original, values) => {
   return verified;
 };
 
-export const profileErrorMessage = (error) => {
-  if (error?.name === 'TimeoutError') return 'The profile service took too long to respond. Please try again.';
-  if (error instanceof TypeError) return 'The profile service could not be reached. Check your connection and try again.';
-  return error?.message || 'The profile request failed. Please try again.';
-};
+export const profileErrorMessage = (error) => serviceErrorMessage(error, 'profile');
 
 export const fetchOrders = async ({ signal } = {}) => {
-  const timeout = AbortSignal.timeout(20000);
-  const response = await fetch(`${BASE_URL}/orders`, {
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    cache: 'no-store',
+  const response = await merchantRequest('/orders', {
+    signal,
+    httpError: (status) => `Could not load orders (HTTP ${status}). Please try again.`,
   });
-  if (!response.ok) throw new Error(`Could not load orders (HTTP ${response.status}). Please try again.`);
-  let data;
-  try { data = await response.json(); }
-  catch { throw new Error('The order service returned an unreadable orders list. Please refresh orders.'); }
+  const data = await readJson(response, 'The order service returned an unreadable orders list. Please refresh orders.');
   return parseOrders(data);
 };
 
@@ -148,17 +112,12 @@ const mutateOrder = async (order, nextStatus, { deleting = false } = {}) => {
   if (key === null || (deleting ? order.status !== 'Accepted' : !canChangeOrderStatus(order.status, nextStatus))) {
     throw new Error('This action is unavailable for the current order status. Please refresh orders.');
   }
-  let response;
-  try {
-    response = await fetch(`${BASE_URL}/orders/${encodeURIComponent(key)}`, {
-      method: deleting ? 'DELETE' : 'PATCH',
-      ...(deleting ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: nextStatus }) }),
-      signal: AbortSignal.timeout(20000),
-    });
-  } catch {
-    throw new Error('Could not confirm this action. The service may have received it. Refresh orders before trying again.');
-  }
-  if (!response.ok) throw new Error(`The order action failed (HTTP ${response.status}). No change has been confirmed.`);
+  await merchantRequest(`/orders/${encodeURIComponent(key)}`, {
+    method: deleting ? 'DELETE' : 'PATCH',
+    ...(deleting ? {} : { json: { status: nextStatus } }),
+    uncertainMessage: 'Could not confirm this action. The service may have received it. Refresh orders before trying again.',
+    httpError: (status) => `The order action failed (HTTP ${status}). No change has been confirmed.`,
+  });
 
   // Keep the existing write contract without assuming a mutation response shape.
   // Verify the result through the documented orders-list response instead.
@@ -175,8 +134,4 @@ const mutateOrder = async (order, nextStatus, { deleting = false } = {}) => {
 export const changeOrderStatus = (order, status) => mutateOrder(order, status);
 export const deleteOrder = (order) => mutateOrder(order, undefined, { deleting: true });
 
-export const orderErrorMessage = (error) => {
-  if (error?.name === 'TimeoutError') return 'The order service took too long to respond. Please try again.';
-  if (error instanceof TypeError) return 'The order service could not be reached. Check your connection and try again.';
-  return error?.message || 'The order request failed. Please try again.';
-};
+export const orderErrorMessage = (error) => serviceErrorMessage(error, 'order');

@@ -94,6 +94,21 @@
   flex: 1;
   padding-block: var(--space-7) var(--space-8);
 }
+
+.route-message {
+  max-width: 65ch;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+.route-message h2 {
+  margin-top: 0;
+}
+.route-message .container1 {
+  margin-top: var(--space-6);
+}
 .page-header, .edit-page > .container, .container3 {
   display: flex;
   align-items: center;
@@ -460,6 +475,7 @@
 }
 .menu-item-actions {
   display: grid;
+  min-width: 0;
   justify-items: end;
   gap: var(--space-4);
 }
@@ -508,6 +524,10 @@
 }
 .menu-editor-summary .price {
   margin: 0;
+}
+.menu-item-actions .price, .menu-editor-summary .price {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .menu-editor-fields .menu-form {
   margin-top: 0;

@@ -27,6 +27,31 @@ another port if that port is occupied. On Windows, use `npm.cmd` in place of
 Use `npm ci` to reproduce `package-lock.json`; no environment variables or
 separate backend startup are required to start the frontend itself.
 
+## Merchant API configuration
+
+Menu, orders, and profile share `VITE_API_BASE_URL`, resolved in
+`src/utils/config.js`. If unset or blank, it defaults to the existing public
+service, `https://kilo-eats-backend.onrender.com`.
+
+To override it, copy `.env.example` to `.env.local` and set the public API URL:
+
+```dotenv
+VITE_API_BASE_URL=https://api.example.invalid
+```
+
+This is a placeholder; substitute your actual service address. Absolute HTTP(S)
+URLs may include a path prefix; trailing slashes are removed. Credentials, query
+strings, and fragments are rejected with a visible configuration error instead
+of crashing the app or silently falling back. Restart Vite after changing the
+setting; rebuild production assets to change a production API URL. Preview uses
+the value baked into the build, not a runtime server setting.
+
+**All `VITE_*` values are public browser code. Never put secrets, passwords, API
+keys, or private tokens in them.** Local `.env` files are ignored by Git; only
+the placeholder example is tracked. The API must permit the frontend origin
+through CORS, including existing PATCH/DELETE requests. Vite provides no API
+proxy or backend. Changing this setting does not enable authentication.
+
 ## Commands
 
 | Command | Purpose |
@@ -34,10 +59,12 @@ separate backend startup are required to start the frontend itself.
 | `npm run dev` | Start the development server with hot reload. |
 | `npm run build` | Build production assets into `dist/`. |
 | `npm run lint` | Check JavaScript and JSX with ESLint. |
+| `npm test` | Run all isolated regression tests; no live requests or credentials. |
 | `npm run test:menu` | Run isolated menu API and validation regression tests with Node's built-in test runner. No live requests are made. |
 | `npm run test:orders` | Run isolated order parsing, transition, mutation, and read-back regression tests. No live requests are made. |
 | `npm run test:profile` | Run isolated profile parsing, validation, save, and read-back regression tests. No live requests are made. |
 | `npm run test:auth` | Run isolated auth validation, payload, availability, and adapter-failure tests. No live requests are made. |
+| `npm run test:reliability` | Check API URL validation and distinguish HTTP, malformed, network/body-download, timeout, and empty-data outcomes. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -54,16 +81,24 @@ routes so direct links and refreshes work.
 | `/profile` | Restaurant details, refresh/error states, and an accessible editing dialog. |
 | `/signup` | Customer/restaurant-owner signup UI with validation; live submission unavailable. |
 | `/login` | Matching email/password login UI; live submission unavailable. |
-| `/restaurant/:restaurantId` | Placeholder displaying the restaurant ID, for example `/restaurant/1`. |
+| `/restaurant/:restaurantId` | Explicit unfinished-feature notice, restaurant ID, and return link; no restaurant browsing/data request. |
+| Any unknown path | Accessible not-found screen with Menu and Orders recovery links. |
 
 The main navigation links to Menu, Orders, and Profile, with a separate Log in
 entry. Signup and login link to each other. Open the restaurant placeholder
 directly by URL.
 
+Client-side page navigation updates the document title and focuses the new page
+heading. Initial direct loads preserve normal keyboard entry through the skip
+link; query-only menu selections preserve form focus. Active navigation follows
+the router's case/trailing-slash matching.
+
 ## Backend limitations
 
-- Menu, order, and profile requests use the hard-coded base URL
-  `https://kilo-eats-backend.onrender.com` in `src/utils/api.js`. The current read
+- Menu, order, and profile requests use the configurable public service above.
+  Endpoint contracts remain in `src/utils/api.js`; shared transport handles
+  timeouts, cancellation, HTTP failures, and JSON syntax errors without retries.
+  Interrupted JSON downloads remain network/timeout failures. The current read
   contracts are `GET /item` returning `{ item: { menu: { menuItems: [...] } } }`,
   `GET /orders` returning `{ orders: [...] }`, and `GET /restaurant` returning
   a flat restaurant object. These reads returned HTTP 200 during baseline
@@ -79,6 +114,8 @@ directly by URL.
 - Menu, order, and profile reads surface HTTP, connection, timeout, and
   malformed-response errors with a retry action. Failed requests are distinct
   from genuinely empty or unavailable data.
+- Footer contact details and general social links remain sample content;
+  verify them before treating them as public business information.
 - The root JSON files are sample data, not automatically loaded fallbacks.
   Although `json-server` is declared, no script launches it, and `server.js`
   is empty. No backend, database, or authentication server runs with Vite.
@@ -228,3 +265,34 @@ directly by URL.
   contracts, server password policy and credential handling, account uniqueness,
   verified session lifecycle, and server-enforced restaurant membership/owner
   approval. No password reset, social login, or backend authentication is added.
+
+## Frontend reliability verification
+
+- Build, lint, and all 71 isolated regression tests pass. Tests intercept fetch;
+  the suite never creates accounts or changes the live service. New coverage
+  checks API configuration, interrupted body downloads, and distinct HTTP,
+  malformed, timeout, and valid empty responses across all three resources.
+- Headless Edge checks cover all routes, including the unknown-route recovery
+  screen, at 360, 390, 768, and 1440px. Direct loads, active links, skip-link/page
+  focus, associated labels, keyboard navigation, dialog focus/Escape/restoration,
+  long content, and horizontal overflow were checked. Vite override and invalid
+  configuration cases were verified through actual browser requests.
+- Intercepted browser requests cover loading, empty, network/HTTP/malformed
+  failures, retry recovery, retained drafts/data, and duplicate menu submission.
+  Confirmed menu writes clear an earlier loading error. Long menu prices wrap
+  instead of widening cards and the editor.
+- Local production preview serves direct routes and unknown-route recovery;
+  the auth test entry is absent from built output. Production assets were checked
+  for fixture markers and credential patterns. Frontend code is public; this
+  check does not establish backend security or authorization.
+- On 2026-11-13, GET-only browser checks could read and parse the default live
+  menu, orders, and profile. All writes and authentication outcomes were isolated
+  simulations. Live write compatibility, persistence, concurrency, and session
+  behavior remain unverified. No deployment or real-device/screen-reader audit
+  was performed; production hosting still needs an SPA fallback.
+
+Before student browsing begins, settle the supported campus/service area,
+restaurant ownership/approval, delivery fulfillment and handoff, currency/payment
+methods and fees, and order cancellation/status meanings. A small first release
+can target one campus with approved restaurants; other choices require product
+agreement and documented backend contracts rather than frontend assumptions.
