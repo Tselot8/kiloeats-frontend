@@ -69,6 +69,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:browsing` | Check demo campus filtering, menu lookup, availability, invalid links, isolated snapshots, and cancellation. |
 | `npm run test:cart` | Check quantities, integer money, replacement confirmation, restoration, catalog changes, and storage failures. |
 | `npm run test:identity` | Check identity/route rules, verification states, safe returns, student-only signup payloads, and isolated role-network behavior. |
+| `npm run test:admin` | Check synthetic review access, decisions, stale/duplicate actions, resubmission history, and restaurant-specific staff assignment. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -89,12 +90,12 @@ routes so direct links and refreshes work.
 | `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
 | `/cart` | Single-restaurant/campus demo cart, quantities, removals, food subtotal, and unquoted delivery fee. |
 | `/account` | Student account and verification status; student identity required. |
-| `/admin` | Reserved admin placeholder; admin identity required. No review dashboard. |
+| `/admin?section=students` or `?section=restaurants` | Admin identity required. Review workspace in the isolated role harness; no active review service in normal operation. |
 | Any unknown path | Accessible not-found screen with public browsing/cart recovery, or Menu/Orders for assigned staff. |
 
 Navigation follows the current frontend identity: public browsing/cart for
 everyone, student account for students, Menu/Orders/Profile for assigned staff,
-and the reserved admin entry for admins. Shared login remains unavailable.
+and the admin entry for admins. Shared login remains unavailable.
 Frontend gates prevent denied components from mounting; they do not secure the
 backend or establish restaurant ownership. Normal operation is always guest.
 
@@ -279,7 +280,7 @@ the router's case/trailing-slash matching.
 
 ## Frontend reliability verification
 
-- Build, lint, and all 129 isolated regression tests pass. Tests intercept fetch;
+- Build, lint, and all 139 isolated regression tests pass. Tests intercept fetch;
   the suite never creates accounts or changes the live service. New coverage
   checks API configuration, interrupted body downloads, and distinct HTTP,
   malformed, timeout, and valid empty responses across all three resources.
@@ -401,7 +402,7 @@ routes and non-sensitive campus/item query parameters.
 | `/browse`, `/restaurant/:id`, `/cart`, `/login`, `/signup` | Public | Public | Public | Public |
 | `/account` | Login required | Allowed | Denied | Denied |
 | `/`, `/edit-menu`, `/orders`, `/profile` | Login required | Denied | Allowed | Denied |
-| `/admin` | Login required | Denied | Denied | Placeholder allowed |
+| `/admin` (both sections) | Login required | Denied | Denied | Review harness only; live service unavailable |
 
 Loading/unknown/failed identity never opens protected components. Public
 browsing/cart remain usable. Staff require a non-empty assigned restaurant ID,
@@ -442,4 +443,53 @@ student enrollment eligibility/expiry and re-verification rules; approved email
 policy; accepted ID/evidence types; authorized reviewers, rejection/resubmission
 and appeal rules; private evidence upload/storage/access; and retention/deletion
 policy. No real IDs, credentials, or live writes are used to demonstrate these
-screens. Admin review tools belong to a later milestone.
+screens. The synthetic admin review workflow below does not settle these policies.
+
+## Isolated admin review workflow
+
+- With Vite running, open `/tests/fixtures/roles.html`, choose **Admin**, and
+  navigate to `/admin`. Student verification and Restaurant access are separate
+  sections. Guests, students, staff, and loading/unknown identities never mount
+  the review data component or call its adapter. These frontend gates do not
+  secure a future backend.
+- `src/components/admin/AdminReviewDashboard.jsx` uses the asynchronous
+  `loadAdminReviews`/`decideAdminReview` boundary in `src/utils/adminReview.js`.
+  Only the isolated harness injects `tests/fixtures/admin-review-service.js`.
+  Its synthetic people, restaurant applications, memberships, and text evidence
+  stay in memory and reset on reload. There are no document images, uploads,
+  network requests, browser evidence storage, or changes to real roles.
+- Pending student attempts can be approved or rejected. Rejection requires an
+  explanatory reason (at least 10 characters as UI guidance, not an enrollment
+  policy). Each decision records the synthetic reviewer and time. The harness's
+  applicant-resubmission control creates a new attempt after rejection; previous
+  attempts and decision records remain read-only. This test-only control does
+  not authorize an admin to submit evidence on a real student's behalf.
+- Restaurant approval and staff membership are independent. Approving a
+  restaurant never assigns staff. A membership approval explicitly selects its
+  requested, approved restaurant and records that staff/restaurant assignment.
+  A reviewer cannot approve or reject their own submission/access request.
+  No decision grants a live session or modifies the merchant API.
+- Harness controls demonstrate deferred/empty/failed reads, failed decisions,
+  and a competing reviewer. Pending submissions are locked against duplicates;
+  version/status conflicts require refresh. Errors keep review input and prior
+  data, and no mutation is retried automatically. Decision times and history are
+  synthetic browser-memory records, not a durable or trusted audit trail.
+- The normal app has no active review adapter and remains guest-only. The
+  dashboard, admin controls, synthetic evidence, and role harness are excluded
+  from production output. No URL, local-storage role, or environment switch can
+  activate them in normal operation. A supported backend/session adapter and
+  deliberate integration are required before real admin review is possible.
+- Regression and headless Edge checks cover both sections at 360, 390, 768,
+  and 1440px: denials with zero admin requests, validation, separate decisions,
+  retained input, retry, stale/duplicate actions, resubmission history, keyboard
+  focus containment/restoration, and overflow. All writes are synthetic and
+  remain in memory. Real-device and screen-reader audits remain unperformed.
+
+Before live review, define enrollment eligibility and re-verification/expiry,
+approved email policy (ownership alone is insufficient), acceptable evidence,
+reviewer provisioning and conflicts, rejection/resubmission/appeal rules, and
+evidence retention/deletion. No values or approved domains are assumed here.
+The backend must supply sessions, server-enforced admin/staff roles and
+restaurant ownership, private evidence access/storage, durable attempts and
+audit history, trusted timestamps, atomic version checks, and safe handling of
+duplicate or uncertain writes. There is no backend implementation in this milestone.

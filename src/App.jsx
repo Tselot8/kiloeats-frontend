@@ -23,7 +23,7 @@ import AccessGate from "./components/AccessGate.jsx";
 import StudentAccountPage from "./components/StudentAccountPage.jsx";
 import AdminPage from "./components/AdminPage.jsx";
 
-export const AppWorkspace = () => (
+export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
   <>
     <RouteFocus />
     <div className="app">
@@ -37,7 +37,7 @@ export const AppWorkspace = () => (
           <Route path="/orders" element={<AccessGate area="merchant"><OrdersPage /></AccessGate>} />
           <Route path="/profile" element={<AccessGate area="merchant"><ProfilePage /></AccessGate>} />
           <Route path="/account" element={<AccessGate area="student"><StudentAccountPage /></AccessGate>} />
-          <Route path="/admin" element={<AccessGate area="admin"><AdminPage /></AccessGate>} />
+          <Route path="/admin" element={<AccessGate area="admin"><AdminWorkspace /></AccessGate>} />
           <Route path="/browse" element={<StudentBrowsePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
@@ -67,6 +67,10 @@ export const AppWorkspace = () => (
     <CartConfirmation />
   </>
 );
+
+AppWorkspace.propTypes = {
+  AdminWorkspace: (props) => props.AdminWorkspace != null && typeof props.AdminWorkspace !== 'function' ? new Error('Admin workspace must be a component.') : null,
+};
 
 const App = () => <Router><IdentityProvider><CartProvider><AppWorkspace /></CartProvider></IdentityProvider></Router>;
 
