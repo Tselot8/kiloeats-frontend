@@ -4,7 +4,8 @@ React 18, React Router 7, and Vite 6 frontend for KiloEats, a university food
 delivery project. The existing interface primarily manages restaurant menus,
 incoming orders, and restaurant profiles. A separate student demo lets you
 browse synthetic restaurants and menus by campus and manage a persisted demo
-cart. Checkout and order submission are not implemented.
+cart. Verified synthetic students can complete an isolated demo checkout;
+live checkout, authentication and order submission remain unavailable.
 
 ## Prerequisites
 
@@ -70,6 +71,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:cart` | Check quantities, integer money, replacement confirmation, restoration, catalog changes, and storage failures. |
 | `npm run test:identity` | Check identity/route rules, verification states, safe returns, student-only signup payloads, and isolated role-network behavior. |
 | `npm run test:admin` | Check synthetic review access, decisions, stale/duplicate actions, resubmission history, and restaurant-specific staff assignment. |
+| `npm run test:checkout` | Check verified-student access, delivery validation, quote binding/expiry, catalog changes, integer totals, idempotency, uncertainty and cart revisions. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -89,6 +91,7 @@ routes so direct links and refreshes work.
 | `/browse?campus=<id>` | Student restaurant discovery with URL-based campus selection and explicit demo data. |
 | `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
 | `/cart` | Single-restaurant/campus demo cart, quantities, removals, food subtotal, and unquoted delivery fee. |
+| `/checkout` | Verified-student gate; synthetic checkout/receipt in the isolated role harness, no live ordering service. |
 | `/account` | Student account and verification status; student identity required. |
 | `/admin?section=students` or `?section=restaurants` | Admin identity required. Review workspace in the isolated role harness; no active review service in normal operation. |
 | Any unknown path | Accessible not-found screen with public browsing/cart recovery, or Menu/Orders for assigned staff. |
@@ -280,7 +283,7 @@ the router's case/trailing-slash matching.
 
 ## Frontend reliability verification
 
-- Build, lint, and all 139 isolated regression tests pass. Tests intercept fetch;
+- Build, lint, and isolated regression tests pass. Tests intercept fetch;
   the suite never creates accounts or changes the live service. New coverage
   checks API configuration, interrupted body downloads, and distinct HTTP,
   malformed, timeout, and valid empty responses across all three resources.
@@ -324,8 +327,8 @@ the router's case/trailing-slash matching.
 - Unsupported campuses, unknown restaurant IDs, unsupported campus/restaurant
   combinations, empty menus, and unavailable menus have separate recovery
   states. Unavailable foods stay visible and labeled and cannot be added to the
-  cart. Checkout, order submission, live authentication, maps, and geolocation
-  are not implemented.
+  cart. Live checkout, order submission, authentication, maps, and geolocation
+  are not implemented. The isolated checkout simulation is described below.
 - `tests/fixtures/browsing.html` is a separate development-only test entry for
   empty discovery, failed/deferred reads, explicit retries, and stale-result
   handling. Normal routes cannot enable its controls through query parameters
@@ -337,7 +340,7 @@ the router's case/trailing-slash matching.
   delivery in ETB; students may cancel before acceptance. Future statuses are
   Pending → Accepted → Ready → Delivered, with Declined and Cancelled separate.
   The legacy merchant endpoints and **Order Ready → Done** mapping are unchanged.
-- Before cart/checkout, define exact distance bands/fees (every fee must be
+- Before operational checkout, define exact distance bands/fees (every fee must be
   strictly below 100 ETB), how distance is established without guessing, supported
   campus drop-off points and handoff/contact rules, and how/when a fee is quoted.
   Establish documented student read/order contracts, server approval/membership
@@ -349,9 +352,9 @@ the router's case/trailing-slash matching.
 - Available sample foods can be added from a campus-specific menu. `/cart`
   shows the restaurant, campus, unit prices, positive whole-number quantities,
   line totals, and **food subtotal** in ETB. Quantities can be updated, individual
-  items removed, and the cart cleared after confirmation. There is no checkout
-  action; delivery is **not yet quoted**, not assumed free or included in a final
-  payable total.
+  items removed, and the cart cleared after confirmation. **Review demo checkout**
+  opens `/checkout` with role/verification recovery. The cart's delivery is
+  **not yet quoted**, not assumed free or included in a final payable total.
 - One cart holds one restaurant and one campus. Adding from either a different
   restaurant or campus asks before replacing all items. Cancel/Escape preserves
   the original cart; confirmation rechecks the selected food and adds it once.
@@ -382,7 +385,7 @@ the router's case/trailing-slash matching.
   replacement/cancel checks passed at 360, 390, 768, and 1440px in development
   and production preview. Development checks also verified refresh, restoration
   notices, and storage failures. Live auth, price/availability guarantees,
-  server validation, and order creation remain unimplemented. Checkout still
+  server validation, and live order creation remain unimplemented. Operational checkout still
   needs agreed distance bands/fees below 100 ETB, campus drop-offs/handoff,
   fee quotation timing, and supported student authentication/order contracts.
 
@@ -401,6 +404,7 @@ routes and non-sensitive campus/item query parameters.
 | --- | --- | --- | --- | --- |
 | `/browse`, `/restaurant/:id`, `/cart`, `/login`, `/signup` | Public | Public | Public | Public |
 | `/account` | Login required | Allowed | Denied | Denied |
+| `/checkout` | Login required, cart preserved | Verified only; synthetic adapter required | Denied | Denied |
 | `/`, `/edit-menu`, `/orders`, `/profile` | Login required | Denied | Allowed | Denied |
 | `/admin` (both sections) | Login required | Denied | Denied | Review harness only; live service unavailable |
 
@@ -413,8 +417,8 @@ Do not connect a real staff session until the backend can enforce that mapping.
 
 The student account page shows Not submitted, Pending, Verified, and Rejected,
 including a supplied rejection reason and future resubmission guidance. Only
-verified student identity is marked as future order-eligible; no state enables
-checkout or order submission here. University-email verification and manual
+verified student identity may open the isolated checkout simulation; no state
+connects live checkout or enables a real order. University-email verification and manual
 student-ID review are **proposals**: no approved domains, enrollment guarantee,
 review timeframe, upload endpoint, or email ownership flow is invented. Email
 control alone does not establish current enrollment. Live verification is
@@ -506,7 +510,8 @@ duplicate or uncertain writes. There is no backend implementation in this milest
   wrapping navigation on smaller screens. Role visibility, routes,
   action labels, native dialog focus handling, and reduced-motion support are
   retained. Browsing/menu, cart, identity, and isolated admin styles use the same
-  tokens. No decorative search, checkout, or dashboard controls are introduced.
+  tokens. No decorative search or dashboard controls are introduced. The cart's
+  checkout action leads to the implemented verified-student gate.
 - Discovery uses the reference's asymmetry, organic orange background, double
   circular food frame and outlined capsules. Existing campus controls and demo
   information remain available; no unsupported promotional sections were added.
@@ -531,3 +536,59 @@ duplicate or uncertain writes. There is no backend implementation in this milest
   actions use isolated services only. Production fixture exclusions and existing
   backend limitations remain unchanged. Physical-device and screen-reader audits
   have not been performed.
+
+## Verified-student demo checkout (Milestone 12)
+
+- From a populated cart, choose **Review demo checkout**. Guests get a safe
+  `/login?returnTo=%2Fcheckout` recovery link without losing the cart; unverified
+  students get account/verification guidance; staff/admin are denied. Denied
+  identities never mount checkout data components or call the service. These
+  are frontend gates, not backend authorization. Normal operation stays guest-only.
+- For the simulation, run Vite, open `/tests/fixtures/roles.html`, select
+  **verified**, add sample food, then open the cart and checkout. Use fictional
+  names, phone numbers (for example `000 000 0000`) and instructions only. Select
+  a **Fictional … handoff** location, request a demo quote, review the final
+  amounts, check the review box, then submit. No real addresses or documents
+  are collected. The receipt explicitly says no restaurant received the order.
+- `src/utils/checkout.js` defines asynchronous drop-off, quote, current-catalog,
+  submission and operation-lookup boundaries; these are adapter shapes, not
+  invented HTTP endpoints. Normal `CHECKOUT_SERVICE` is unavailable. Only the
+  isolated role harness imports `tests/fixtures/checkout-service.js`. Its two
+  handoff examples per campus and 42.50/65.00 ETB fees are synthetic test values,
+  not operational distance bands, prices, distances or delivery estimates.
+  All simulated writes stay in memory; no merchant endpoint is used.
+- Totals reuse integer minor units. Quotes must match the student, item IDs,
+  quantities, prices and selected drop-off, be unexpired, and have a fee from
+  0 through 99.99 ETB. A changed cart/destination invalidates its quote; a new
+  quote/amount requires renewed review. A current catalog check runs before
+  submission, with another check at recording in the fixture. Changed prices
+  or availability stop ordering and visibly update the cart for renewed review.
+- Recipient name, phone, handoff instructions, operations and receipts live only
+  in React/service memory, never browser storage or request logs. UI validation
+  requires a name, a supported drop-off and 7–15 phone digits, allowing common
+  formatting; demo limits are 120 name and 500 instruction characters. These
+  UI constraints do not establish a future backend/contact policy. Only the
+  existing non-sensitive cart is persisted by normal operation.
+- A synchronous pending lock prevents duplicates. An unchanged, explicitly
+  retried confirmed rejection retains its operation ID. Uncertain/malformed
+  post-write outcomes reserve the operation and expose **Check demo order
+  outcome**, a read-only lookup; writes are never automatically repeated.
+  Not-found/failed lookup is not presented as proof of failure. In-memory
+  idempotency prevents a repeated operation ID from creating another order.
+  Navigation/cart clearing does not remove recovery for a reserved operation.
+- A matching receipt is required before claiming success. Only the submitted
+  cart snapshot **and revision** are cleared; newer cart changes survive.
+  Refresh resets identities, delivery drafts, quotes, demo orders and receipts;
+  there is no durable recovery, history, tracking, cancellation or merchant
+  integration. Restaurant delivery and cash on delivery in ETB are the agreed
+  future model, not an operating service or payment collection in this demo.
+- Fixture controls and the checkout service/evidence are absent from production.
+  Role parameters, local-storage edits and Vite configuration cannot enable a
+  live checkout. Authentication/verification remain unavailable in normal use.
+
+Before live ordering, define approved drop-offs and handoff/contact rules,
+operational distance bands and fee quotation/expiry policy (fees strictly below
+100 ETB), server sessions and enrollment verification, restaurant approval and
+ownership checks, server-priced catalog/version checks, durable idempotency and
+order/outcome lookup, privacy/retention rules, cash reconciliation, and atomic
+acceptance/cancellation behavior. No backend or delivery-pricing formula is added.

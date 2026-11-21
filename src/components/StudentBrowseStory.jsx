@@ -27,7 +27,7 @@ const StudentBrowseStory = () => (
       </figure>
       <div className="campus-food-copy">
         <h3 id="campus-food-feature-title">Ethiopian <span>Food,</span><br />For Your<br /><span>Campus</span></h3>
-        <p><strong>Sample restaurants and menus.</strong> These are synthetic examples, not real partners. Ordering and delivery are not available.</p>
+        <p><strong>Sample restaurants and menus.</strong> These are synthetic examples, not real partners. Live ordering and delivery are not available.</p>
         <p>Planned delivery is restaurant-managed, with cash on delivery in ETB. Distance-based fees will be strictly below 100 ETB; exact fees are not set.</p>
         <p>Food photographs are illustrative examples, not photos of real restaurant partners.</p>
         <a className="button-link" href="/food-photo-credits.html">About this photo</a>

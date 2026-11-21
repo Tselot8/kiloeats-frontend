@@ -179,6 +179,18 @@ export const cartReducer = (state, action, catalog = DEMO_RESTAURANTS) => {
         if (JSON.stringify(result.cart) === JSON.stringify(state.cart)) return state;
         return commit(result.cart, result.notices);
       }
+      case 'CHECKOUT_REVIEW': {
+        if (state.revision !== action.revision || state.pending) return state;
+        const result = reconcileCart(state.cart, action.catalog);
+        if (JSON.stringify(result.cart) === JSON.stringify(state.cart)) return state;
+        return commit(result.cart, result.notices, 'The demo menu changed. Review the updated cart before checkout.');
+      }
+      case 'CHECKOUT_CONFIRMED': {
+        if (state.revision !== action.revision || JSON.stringify(state.cart) !== JSON.stringify(action.cart) || state.pending) {
+          return { ...state, feedback: 'Demo order confirmed. Your newer cart changes were kept.' };
+        }
+        return { ...commit(null, [], 'Demo order confirmed. Only the submitted cart was cleared.'), notices: [] };
+      }
       case 'STORAGE': return state.storageWarning === action.warning ? state : { ...state, storageWarning: action.warning };
       default: return state;
     }

@@ -7,7 +7,7 @@ import { findCampus } from '../utils/studentBrowsing.js';
 const statusDetails = {
   'not-submitted': { label: 'Not submitted', description: 'No student verification has been submitted. The verification policy and live submission service are still being prepared.' },
   pending: { label: 'Pending', description: 'A verification submission is awaiting review in this view. No review timeframe is promised. You can keep browsing and preparing your cart.' },
-  verified: { label: 'Verified', description: 'This identity is marked verified in this view. Verified students will be eligible to place orders once ordering is available; checkout remains unavailable.' },
+  verified: { label: 'Verified', description: 'This identity is marked verified in this view. Verified synthetic students can review demo checkout in the isolated harness. Live ordering remains unavailable.' },
   rejected: { label: 'Rejected', description: 'The previous submission was not accepted. Review the reason below before resubmitting when a supported verification service is available.' },
 };
 
@@ -51,7 +51,8 @@ const StudentAccountPage = () => {
       {canSubmit && <button className="verification-submit" type="button" onClick={submit} disabled={!synthetic || submitting}>{submitting ? 'Submitting synthetic example…' : synthetic ? status === 'rejected' ? 'Resubmit synthetic example' : 'Submit synthetic example' : status === 'rejected' ? 'Resubmission unavailable' : 'Verification submission unavailable'}</button>}
       <p role="status" className="verification-progress">{submitting ? 'Submitting a synthetic example only. Please wait.' : ''}</p>
       {feedback && <p ref={feedbackRef} tabIndex={-1} className="menu-feedback menu-feedback-error" role="alert">{feedback}</p>}
-      <p className="menu-helper">{orderEligibility(identity) ? 'Verification status alone does not enable checkout in this milestone.' : 'You can browse and prepare a cart without verification. Ordering will require a verified student identity.'}</p>
+      {orderEligibility(identity) && <p><Link className="button-link button-secondary" to="/checkout">Review demo checkout</Link></p>}
+      <p className="menu-helper">{orderEligibility(identity) ? 'Verification alone does not connect a live ordering service. Demo checkout requires the isolated synthetic service.' : 'You can browse and prepare a cart without verification. Ordering will require a verified student identity.'}</p>
     </section>
     <section className="verification-methods" aria-labelledby="verification-methods-title"><h3 id="verification-methods-title">Proposed verification methods</h3><div><article><h4>University email verification</h4><p>A future service could confirm control of a university email address. No approved domains or email-verification service are defined here. Email ownership alone does not prove current enrollment.</p></article><article><h4>Manual student-ID review</h4><p>A future private process could let authorized reviewers check student evidence. Live submission is unavailable; accepted documents, reviewer access, and retention/deletion rules still need agreement.</p></article></div></section>
   </section>;

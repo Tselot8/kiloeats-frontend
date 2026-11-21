@@ -30,13 +30,15 @@ export const normalizeIdentity = (value) => {
 
 export const accessDecision = (area, identity) => {
   if (area === 'public') return 'allowed';
-  if (!['student', 'merchant', 'admin'].includes(area)) return 'denied';
+  if (!['student', 'merchant', 'admin', 'checkout'].includes(area)) return 'denied';
   if (identity?.status === 'loading') return 'loading';
   const normalized = normalizeIdentity(identity);
   if (identity?.status !== 'ready' || normalized.status !== 'ready') return 'unavailable';
   if (normalized.role === 'guest') return 'login-required';
-  const required = { student: 'student', merchant: 'restaurant-staff', admin: 'admin' }[area];
-  return normalized.role === required ? 'allowed' : 'denied';
+  const required = { student: 'student', checkout: 'student', merchant: 'restaurant-staff', admin: 'admin' }[area];
+  if (normalized.role !== required) return 'denied';
+  if (area === 'checkout' && normalized.verification.status !== 'verified') return 'verification-required';
+  return 'allowed';
 };
 
 export const orderEligibility = (identity) => accessDecision('student', identity) === 'allowed' && identity.verification.status === 'verified';
@@ -45,6 +47,7 @@ const routeArea = (path) => {
   if (['/', '/edit-menu', '/orders', '/profile'].includes(path)) return 'merchant';
   if (path === '/account') return 'student';
   if (path === '/admin') return 'admin';
+  if (path === '/checkout') return 'checkout';
   return 'public';
 };
 
@@ -56,7 +59,7 @@ export const safeReturnPath = (value) => {
     if (url.origin !== 'https://kiloeats.invalid' || unsafeCharacters(decoded) || decoded.includes('//') || decoded.includes('%')) return '/browse';
     const original = url.pathname.replace(/\/+$/, '') || '/';
     const path = /^\/restaurant\/[a-z0-9_-]+$/i.test(original) ? `/restaurant/${original.split('/')[2]}` : original.toLowerCase();
-    if (!['/', '/edit-menu', '/orders', '/profile', '/account', '/admin', '/browse', '/cart'].includes(path)
+    if (!['/', '/edit-menu', '/orders', '/profile', '/account', '/admin', '/browse', '/cart', '/checkout'].includes(path)
       && !/^\/restaurant\/[a-zA-Z0-9_-]+$/.test(path)) return '/browse';
     // Only preserve existing, non-sensitive navigation context. Never reflect
     // arbitrary queries, credential-like fields, fragments or nested redirects.

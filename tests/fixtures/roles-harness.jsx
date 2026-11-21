@@ -10,6 +10,7 @@ import { installRoleNetwork } from './role-network.js';
 import AdminReviewDashboard from '../../src/components/admin/AdminReviewDashboard.jsx';
 import { createDemoAdminReviewService } from './admin-review-service.js';
 import { normalizeIdentity } from '../../src/utils/identity.js';
+import { createDemoCheckoutService } from './checkout-service.js';
 import '../../src/index.css';
 
 // ISOLATED_ROLE_FIXTURE: no normal route imports this entry or its controls.
@@ -36,6 +37,25 @@ adminControl.compete = async (id = 'attempt-b1') => {
 };
 adminControl.resubmit = () => adminService.submitSyntheticAttempt(normalizeIdentity({ role: 'student', user: { id: 'review-student-a', campusId: 'aau-4k' }, verification: { status: 'rejected' } }), 'review-student-a');
 fixture.admin = adminControl;
+const checkoutControl = { readMode: 'success', quoteMode: 'success', submitMode: 'success', lookupMode: 'success', quoteLifetime: 60000, delay: 120, pending: [] };
+const checkoutService = createDemoCheckoutService({ quoteLifetime: () => checkoutControl.quoteLifetime, before: async (operation) => {
+  const mode = operation === 'dropoffs' || operation === 'catalog' ? checkoutControl.readMode : operation === 'quote' ? checkoutControl.quoteMode : operation === 'lookup' ? checkoutControl.lookupMode : checkoutControl.submitMode;
+  if (mode === 'deferred') await new Promise((resolve) => checkoutControl.pending.push(resolve));
+  else await new Promise((resolve) => setTimeout(resolve, operation.startsWith('submit') ? Math.max(350, checkoutControl.delay) : checkoutControl.delay));
+  if (mode === 'failure') {
+    if (operation === 'submit-before') return { outcome: 'rejected' };
+    throw new Error('Synthetic checkout fixture failure');
+  }
+  if (mode === 'malformed') return { malformed: true };
+  if (mode === 'empty' && operation === 'dropoffs') return [];
+  if (mode === 'uncertain-before' && operation === 'submit-before') throw new Error('Synthetic uncertain request outcome');
+  if (mode === 'uncertain-after' && operation === 'submit-after') throw new Error('Synthetic response lost after recording');
+} });
+checkoutControl.requests = checkoutService.requests;
+checkoutControl.orders = checkoutService.orders;
+checkoutControl.reprice = () => { checkoutService.catalog[0].items[0].price += 10; };
+checkoutControl.unavailable = () => { checkoutService.catalog[0].items[0].available = false; };
+fixture.checkout = checkoutControl;
 export const SyntheticAdminWorkspace = () => <AdminReviewDashboard service={adminService} />;
 const student = (status) => ({ role: 'student', user: { id: 'fixture-student', name: 'Synthetic Student', email: 'student@example.test', campusId: 'aau-4k' }, verification: { status, rejectionReason: status === 'rejected' ? 'Synthetic review reason: the sample enrollment date was unclear.' : '' } });
 const records = {
@@ -73,7 +93,12 @@ export const Controls = () => {
       <label htmlFor="fixture-review-decision">Decision fixture</label><select id="fixture-review-decision" style={{ width: 'auto', maxWidth: '100%' }} value={adminControl.decisionMode} onChange={(event) => { adminControl.decisionMode = event.target.value; setReviewHint('Decision mode changed.'); }}>{['success', 'failure'].map((mode) => <option key={mode}>{mode}</option>)}</select>
       <button onClick={async () => { try { await adminControl.resubmit(); setReviewHint('New synthetic applicant attempt added. Refresh the review list.'); } catch (error) { setReviewHint(error.message); } }}>Add synthetic applicant resubmission</button>
       <button onClick={async () => { try { await adminControl.compete(); setReviewHint('Another synthetic reviewer decided Student B. Refresh the list.'); } catch (error) { setReviewHint(error.message); } }}>Simulate competing student review</button>
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+      <label htmlFor="fixture-checkout-outcome">Checkout fixture</label><select id="fixture-checkout-outcome" style={{ width: 'auto', maxWidth: '100%' }} defaultValue="success" onChange={(event) => { checkoutControl.submitMode = event.target.value; }}>{['success', 'failure', 'uncertain-before', 'uncertain-after', 'malformed', 'deferred'].map((mode) => <option key={mode}>{mode}</option>)}</select>
+      <button onClick={() => { checkoutControl.reprice(); setReviewHint('Synthetic shiro price changed. Checkout must recheck and require review.'); }}>Reprice synthetic shiro</button>
+      <button onClick={() => { checkoutControl.unavailable(); setReviewHint('Synthetic shiro made unavailable. Checkout must recheck.'); }}>Make synthetic shiro unavailable</button>
     </div><p role="status" style={{ margin: '8px 0 0' }}>{reviewHint}</p>
   </aside>;
 };
-createRoot(document.getElementById('fixture-root')).render(<MemoryRouter initialEntries={['/browse?campus=aau-4k']}><IdentityProvider service={service} verificationService={verificationService}><CartProvider getStorage={getFixtureCartStorage}><Controls /><AppWorkspace AdminWorkspace={SyntheticAdminWorkspace} /></CartProvider></IdentityProvider></MemoryRouter>);
+createRoot(document.getElementById('fixture-root')).render(<MemoryRouter initialEntries={['/browse?campus=aau-4k']}><IdentityProvider service={service} verificationService={verificationService}><CartProvider getStorage={getFixtureCartStorage} catalog={checkoutService.catalog}><Controls /><AppWorkspace AdminWorkspace={SyntheticAdminWorkspace} checkoutService={checkoutService} /></CartProvider></IdentityProvider></MemoryRouter>);

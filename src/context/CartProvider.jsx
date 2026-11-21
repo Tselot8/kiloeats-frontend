@@ -22,6 +22,8 @@ const CartProvider = ({ children, getStorage = browserStorage, catalog = DEMO_RE
     confirm: () => dispatch({ type: 'CONFIRM' }),
     cancel: () => dispatch({ type: 'CANCEL' }),
     recheck: () => dispatch({ type: 'RECHECK' }),
+    reviewCatalog: (catalog, revision) => dispatch({ type: 'CHECKOUT_REVIEW', catalog, revision }),
+    clearSubmittedCart: (cart, revision) => dispatch({ type: 'CHECKOUT_CONFIRMED', cart, revision }),
   }), []);
   const value = useMemo(() => ({ ...state, ...actions, totals: cartTotals(state.cart) }), [state, actions]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

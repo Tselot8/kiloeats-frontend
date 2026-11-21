@@ -22,9 +22,13 @@ import IdentityProvider from "./context/IdentityProvider.jsx";
 import AccessGate from "./components/AccessGate.jsx";
 import StudentAccountPage from "./components/StudentAccountPage.jsx";
 import AdminPage from "./components/AdminPage.jsx";
+import CheckoutProvider from "./context/CheckoutProvider.jsx";
+import CheckoutPage from "./components/CheckoutPage.jsx";
+import { CHECKOUT_SERVICE } from "./utils/checkout.js";
+import "./checkout.css";
 
-export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
-  <>
+export const AppWorkspace = ({ AdminWorkspace = AdminPage, checkoutService = CHECKOUT_SERVICE }) => (
+  <CheckoutProvider service={checkoutService}>
     <RouteFocus />
     <div className="app">
       <div className="reference-backdrop" aria-hidden="true" />
@@ -41,6 +45,7 @@ export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
           <Route path="/admin" element={<AccessGate area="admin"><AdminWorkspace /></AccessGate>} />
           <Route path="/browse" element={<StudentBrowsePage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<AccessGate area="checkout"><CheckoutPage /></AccessGate>} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -67,11 +72,12 @@ export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
       </footer>
     </div>
     <CartConfirmation />
-  </>
+  </CheckoutProvider>
 );
 
 AppWorkspace.propTypes = {
   AdminWorkspace: (props) => props.AdminWorkspace != null && typeof props.AdminWorkspace !== 'function' ? new Error('Admin workspace must be a component.') : null,
+  checkoutService: (props) => props.checkoutService != null && typeof props.checkoutService.available !== 'boolean' ? new Error('Checkout service must declare availability.') : null,
 };
 
 const App = () => <Router><IdentityProvider><CartProvider><AppWorkspace /></CartProvider></IdentityProvider></Router>;
