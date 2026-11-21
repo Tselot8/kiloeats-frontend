@@ -8,6 +8,7 @@ export const StudentDemoNotice = () => (
     <div>
       <p><strong>Sample restaurants and menus.</strong> These are synthetic examples, not real partners. Ordering and delivery are not available.</p>
       <p>Planned delivery is restaurant-managed, with cash on delivery in ETB. Distance-based fees will be strictly below 100 ETB; exact fees are not set.</p>
+      <p>Food photographs are illustrative examples, not photos of real restaurant partners. <a href="/food-photo-credits.html">Photo credits and licenses</a>.</p>
     </div>
   </aside>
 );

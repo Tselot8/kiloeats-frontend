@@ -27,6 +27,7 @@ export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
   <>
     <RouteFocus />
     <div className="app">
+      <div className="reference-backdrop" aria-hidden="true" />
       <a className="skip-link" href="#main-content">Skip to content</a>
       <AppHeader />
       <main id="main-content" className="layout-container app-main" tabIndex={-1}>
@@ -51,6 +52,7 @@ export const AppWorkspace = ({ AdminWorkspace = AdminPage }) => (
           <div className="about-us">
             <h3>About Us</h3>
             <p>Discover the best meals with KiloEats</p>
+            <p><a href="/food-photo-credits.html">Food photo credits and licenses</a></p>
           </div>
           <div className="contact-info">
             <p>Email: support@kiloeats.com</p>

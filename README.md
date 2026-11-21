@@ -311,8 +311,8 @@ the router's case/trailing-slash matching.
   normal history entries; refresh, back/forward, restaurant links, and return
   links preserve it. A direct restaurant URL without a campus asks you to choose.
 - Example: `/restaurant/demo-acacia-kitchen?campus=aau-4k`. All five restaurants,
-  food availability, descriptions, and ETB food prices are synthetic. Local SVG
-  illustrations are illustrative, not restaurant photos. No real partnerships,
+  food availability, descriptions, and ETB food prices are synthetic. Local
+  licensed food photographs and SVGs are illustrative examples, not partner photos. No real partnerships,
   approval, live availability, deliveries, ratings, reviews, distances, or exact
   delivery fees are claimed. Missing/failed images use the existing fallback.
 - `src/data/demoRestaurants.js` is the catalog. The small asynchronous read
@@ -493,3 +493,41 @@ The backend must supply sessions, server-enforced admin/staff roles and
 restaurant ownership, private evidence access/storage, durable attempts and
 audit history, trusted timestamps, atomic version checks, and safe handling of
 duplicate or uncertain writes. There is no backend implementation in this milestone.
+
+## Visual system
+
+- Shared tokens in `src/index.css` follow the supplied visual reference: pale
+  blue-white, vivid orange shapes/outlines, dark brown text and footer, peach
+  supporting surfaces and rounded actions. The locally bundled Shrikhand display
+  font approximates the reference's heavy slanted lettering, with Arial body/form
+  text. Its SIL Open Font License is shipped in `public/fonts/Shrikhand-OFL.txt`.
+  No runtime font service or additional npm dependency is used.
+- `src/App.css` provides a light horizontal navigation shell and visible,
+  wrapping navigation on smaller screens. Role visibility, routes,
+  action labels, native dialog focus handling, and reduced-motion support are
+  retained. Browsing/menu, cart, identity, and isolated admin styles use the same
+  tokens. No decorative search, checkout, or dashboard controls are introduced.
+- Discovery uses the reference's asymmetry, organic orange background, double
+  circular food frame and outlined capsules. Existing campus controls and demo
+  information remain available; no unsupported promotional sections were added.
+  The reference-width comparison and remaining differences are documented in
+  [reference comparison notes](docs/reference-comparison.md).
+- Three dish-matched Commons photographs show beyainatu, shiro on injera, and regional
+  injera-based fit-fit/firfir. They are 900px-wide JPEGs of approximately 101–166KB.
+  `src/components/demoFoodPhotos.js` maps only explicit demo IDs to matching
+  dishes; catalog records and persisted carts are unchanged. Supplied non-demo
+  images take priority; unmatched dishes retain their image or intentional
+  fallback. No tibs/doro wat products or other menu entries were added.
+  See [sources, authors, licenses and modifications](docs/food-imagery.md).
+  Footer/demo links expose the shipped photo credits. Unused generated candidates
+  are not imported or shipped in the application or production output.
+  A fourth, public-domain Ethiopian platter photograph by Tensu.12 is used only
+  in discovery's left-hand orange food feature (900 × 601, about 218KB). It does
+  not add or substitute a menu item. The browsing page's reference icon band is
+  presentational, not a set of category filters.
+- Headless browser checks cover the main experiences at 360, 390, 768, and
+  1440px, including keyboard navigation, dialog focus/restoration, text contrast,
+  long content, overflow, and simulated feedback states. Review/auth/merchant
+  actions use isolated services only. Production fixture exclusions and existing
+  backend limitations remain unchanged. Physical-device and screen-reader audits
+  have not been performed.

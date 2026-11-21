@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { demoFoodPhotos } from './demoFoodPhotos.js';
 
-const FoodImage = ({ src, name }) => {
+const FoodImage = ({ src, name, illustrationId }) => {
   const [failedSource, setFailedSource] = useState(null);
-  const source = typeof src === "string" ? src.trim() : "";
+  const originalSource = typeof src === "string" ? src.trim() : "";
+  const source = originalSource && !originalSource.startsWith('/demo/') ? originalSource : demoFoodPhotos[illustrationId] || originalSource;
   return source && failedSource !== source ? (
     <img key={source} src={source} alt={name} className="food-image" onError={() => setFailedSource(source)} />
   ) : (
@@ -17,6 +19,7 @@ const FoodImage = ({ src, name }) => {
 };
 
 FoodImage.propTypes = {
+  illustrationId: (props) => props.illustrationId != null && typeof props.illustrationId !== 'string' ? new Error('Illustration ID must be a string.') : null,
   src: (props) => props.src != null && typeof props.src !== "string" ? new Error("FoodImage src must be a string.") : null,
   name: (props) => typeof props.name !== "string" ? new Error("FoodImage requires a name.") : null,
 };

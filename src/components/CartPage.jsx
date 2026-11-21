@@ -24,7 +24,7 @@ const CartLine = ({ item, onRemove }) => {
   };
   return (
     <article className="cart-line" aria-labelledby={`${id}-name`}>
-      <FoodImage src={item.image} name={item.name} />
+      <FoodImage src={item.image} name={item.name} illustrationId={item.itemId} />
       <div className="cart-line-content">
         <h4 id={`${id}-name`}>{item.name}</h4><p className="cart-unit-price">{formatETB(item.unitPriceMinor)} each</p>
         <form className="cart-quantity-form" onSubmit={submit} noValidate>

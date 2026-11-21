@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { AUTH_SERVICE, submitAuth, validateAuthFields } from "../utils/auth.js";
 import { CAMPUSES } from '../utils/studentBrowsing.js';
 import { safeReturnPath } from '../utils/identity.js';
+import campusFood from '../images/ethiopian/beyainatu-photo.jpg';
 
 const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
   const signup = mode === "signup";
@@ -74,6 +75,7 @@ const AuthScreen = ({ mode, service = AUTH_SERVICE }) => {
         <p className="auth-eyebrow">Your KiloEats account</p>
         <h2 id={`${prefix}-heading`}>{signup ? "Create a student account" : "Welcome back"}</h2>
         <p>{signup ? "Choose your campus to prepare a student registration." : "Shared login for students, restaurant staff and platform admins, when sign-in is available."}</p>
+        <figure className="auth-editorial-photo"><img src={campusFood} alt="" /><figcaption>Beyainatu · Dawityirga · CC BY-SA 4.0</figcaption></figure>
       </div>
       <div className="auth-card">
         {!available && <div className="auth-unavailable" id={`${prefix}-availability`}>
