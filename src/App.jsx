@@ -24,8 +24,10 @@ import StudentAccountPage from "./components/StudentAccountPage.jsx";
 import AdminPage from "./components/AdminPage.jsx";
 import CheckoutProvider from "./context/CheckoutProvider.jsx";
 import CheckoutPage from "./components/CheckoutPage.jsx";
+import StudentOrdersPage from "./components/StudentOrdersPage.jsx";
 import { CHECKOUT_SERVICE } from "./utils/checkout.js";
 import "./checkout.css";
+import "./studentOrders.css";
 
 export const AppWorkspace = ({ AdminWorkspace = AdminPage, checkoutService = CHECKOUT_SERVICE }) => (
   <CheckoutProvider service={checkoutService}>
@@ -46,6 +48,8 @@ export const AppWorkspace = ({ AdminWorkspace = AdminPage, checkoutService = CHE
           <Route path="/browse" element={<StudentBrowsePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<AccessGate area="checkout"><CheckoutPage /></AccessGate>} />
+          <Route path="/student/orders" element={<AccessGate area="student"><StudentOrdersPage /></AccessGate>} />
+          <Route path="/student/orders/:orderReference" element={<AccessGate area="student"><StudentOrdersPage /></AccessGate>} />
           <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsWrapper />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />

@@ -15,6 +15,7 @@ const AppHeader = () => {
   const browsing = useMatch("/browse");
   const cartRoute = useMatch("/cart");
   const accountRoute = useMatch("/account");
+  const studentOrdersRoute = useMatch("/student/orders/*");
   const adminRoute = useMatch("/admin");
   const { identity } = useIdentity();
   const staff = accessDecision('merchant', identity) === 'allowed';
@@ -30,7 +31,7 @@ const AppHeader = () => {
     { to: browseLink, label: "Browse restaurants", active: browsing || restaurant },
     { to: cartLink, label: `Cart (${totals.quantity})`, active: cartRoute, isCart: true },
     ...(staff ? [{ to: "/", label: "Menu", active: home || editMenu }, { to: "/orders", label: "Orders", active: orders }, { to: "/profile", label: "Profile", active: profile }] : []),
-    ...(student ? [{ to: '/account', label: 'Account & verification', active: accountRoute }] : []),
+    ...(student ? [{ to: '/student/orders', label: 'My demo orders', active: studentOrdersRoute }, { to: '/account', label: 'Account & verification', active: accountRoute }] : []),
     ...(admin ? [{ to: '/admin', label: 'Admin', active: adminRoute }] : []),
     ...(identity.role === 'guest' ? [{ to: '/signup', label: 'Student signup', active: signup }] : []),
   ];

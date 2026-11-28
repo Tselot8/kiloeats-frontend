@@ -45,7 +45,7 @@ export const orderEligibility = (identity) => accessDecision('student', identity
 
 const routeArea = (path) => {
   if (['/', '/edit-menu', '/orders', '/profile'].includes(path)) return 'merchant';
-  if (path === '/account') return 'student';
+  if (path === '/account' || path === '/student/orders' || path.startsWith('/student/orders/')) return 'student';
   if (path === '/admin') return 'admin';
   if (path === '/checkout') return 'checkout';
   return 'public';
@@ -58,9 +58,11 @@ export const safeReturnPath = (value) => {
     const decoded = decodeURIComponent(url.pathname);
     if (url.origin !== 'https://kiloeats.invalid' || unsafeCharacters(decoded) || decoded.includes('//') || decoded.includes('%')) return '/browse';
     const original = url.pathname.replace(/\/+$/, '') || '/';
-    const path = /^\/restaurant\/[a-z0-9_-]+$/i.test(original) ? `/restaurant/${original.split('/')[2]}` : original.toLowerCase();
-    if (!['/', '/edit-menu', '/orders', '/profile', '/account', '/admin', '/browse', '/cart', '/checkout'].includes(path)
-      && !/^\/restaurant\/[a-zA-Z0-9_-]+$/.test(path)) return '/browse';
+    const studentOrder = original.match(/^\/student\/orders\/(DEMO-[A-Z0-9-]+)$/i);
+    const path = studentOrder ? `/student/orders/${studentOrder[1].toUpperCase()}`
+      : /^\/restaurant\/[a-z0-9_-]+$/i.test(original) ? `/restaurant/${original.split('/')[2]}` : original.toLowerCase();
+    if (!['/', '/edit-menu', '/orders', '/profile', '/account', '/admin', '/browse', '/cart', '/checkout', '/student/orders'].includes(path)
+      && !/^\/restaurant\/[a-zA-Z0-9_-]+$/.test(path) && !/^\/student\/orders\/DEMO-[A-Z0-9-]+$/.test(path)) return '/browse';
     // Only preserve existing, non-sensitive navigation context. Never reflect
     // arbitrary queries, credential-like fields, fragments or nested redirects.
     const query = new URLSearchParams();

@@ -7,6 +7,7 @@ import { checkoutCartKey, checkoutReviewKey, checkoutTotals, parseQuote, validat
 import { cartTotals, formatETB } from '../utils/cart.js';
 import { browsePath, findCampus } from '../utils/studentBrowsing.js';
 import FoodImage from './FoodImage.jsx';
+import { studentOrderPath } from '../utils/studentOrders.js';
 
 const EMPTY_DELIVERY = Object.freeze({ recipientName: '', contactPhone: '', dropoffId: '', handoffInstructions: '' });
 
@@ -37,7 +38,9 @@ const CheckoutReceipt = () => {
   useEffect(() => { heading.current?.focus(); document.title = 'Demo order confirmed | KiloEats'; }, []);
   return <section className="student-page checkout-page checkout-receipt" aria-labelledby="checkout-receipt-title">
     <div className="page-header"><div><p className="auth-eyebrow">Synthetic receipt · No live order</p><h2 ref={heading} tabIndex={-1} id="checkout-receipt-title">Demo order confirmed</h2></div><Link className="button-link button-secondary" to={browsePath(receipt.cart.campusId)}>Browse restaurants</Link></div>
-    <div className="checkout-demo-notice"><strong>No restaurant received this order.</strong><p>The order and receipt exist only in this tab’s isolated fixture memory. Refresh clears these records. There is no history, tracking or recovery across refresh.</p></div>
+    <div className="checkout-demo-notice"><strong>No restaurant received this order.</strong><p>The order and receipt exist only in this tab’s isolated fixture memory. You can view its demo history and progress in this tab. Page refresh clears the records; there is no recovery across refresh.</p></div>
+    <div className="container1 student-order-confirmation-links"><Link className="button-link" to={studentOrderPath(receipt.reference)}>View order progress & receipt</Link><Link className="button-link button-secondary" to="/student/orders">View all demo orders</Link></div>
+    <p className="menu-helper student-order-submission-note">This receipt confirms the original demo submission. Open order progress for its current status.</p>
     <div className="checkout-layout"><section className="checkout-panel"><h3>{receipt.cart.restaurantName}</h3><p>{findCampus(receipt.cart.campusId).name}</p>
       <dl className="checkout-reference"><div><dt>Synthetic order reference</dt><dd>{receipt.reference}</dd></div><div><dt>Operation reference</dt><dd><code>{receipt.operationId}</code></dd></div></dl>
       <CheckoutItems cart={receipt.cart} />

@@ -72,6 +72,7 @@ proxy or backend. Changing this setting does not enable authentication.
 | `npm run test:identity` | Check identity/route rules, verification states, safe returns, student-only signup payloads, and isolated role-network behavior. |
 | `npm run test:admin` | Check synthetic review access, decisions, stale/duplicate actions, resubmission history, and restaurant-specific staff assignment. |
 | `npm run test:checkout` | Check verified-student access, delivery validation, quote binding/expiry, catalog changes, integer totals, idempotency, uncertainty and cart revisions. |
+| `npm run test:student-orders` | Check checkout/history continuity, ownership, receipt/status parsing, pending-only cancellation, races, uncertainty and reset/missing-order behavior. |
 | `npm run preview` | Serve the existing production build locally, normally on port 4173. Run the build first. |
 
 Preview is for local verification, not a production server.
@@ -92,6 +93,8 @@ routes so direct links and refreshes work.
 | `/restaurant/:restaurantId?campus=<id>` | Student sample menu, campus coverage, availability, and campus-preserving return link. |
 | `/cart` | Single-restaurant/campus demo cart, quantities, removals, food subtotal, and unquoted delivery fee. |
 | `/checkout` | Verified-student gate; synthetic checkout/receipt in the isolated role harness, no live ordering service. |
+| `/student/orders` | Student-only in-memory demo order history; all student verification states may view their own existing orders. |
+| `/student/orders/:orderReference` | Owned demo receipt/progress and Pending-only cancellation; another student's order is unavailable. |
 | `/account` | Student account and verification status; student identity required. |
 | `/admin?section=students` or `?section=restaurants` | Admin identity required. Review workspace in the isolated role harness; no active review service in normal operation. |
 | Any unknown path | Accessible not-found screen with public browsing/cart recovery, or Menu/Orders for assigned staff. |
@@ -405,6 +408,7 @@ routes and non-sensitive campus/item query parameters.
 | `/browse`, `/restaurant/:id`, `/cart`, `/login`, `/signup` | Public | Public | Public | Public |
 | `/account` | Login required | Allowed | Denied | Denied |
 | `/checkout` | Login required, cart preserved | Verified only; synthetic adapter required | Denied | Denied |
+| `/student/orders`, `/student/orders/:orderReference` | Login required | Own orders only; synthetic service required | Denied | Denied |
 | `/`, `/edit-menu`, `/orders`, `/profile` | Login required | Denied | Allowed | Denied |
 | `/admin` (both sections) | Login required | Denied | Denied | Review harness only; live service unavailable |
 
@@ -578,9 +582,10 @@ duplicate or uncertain writes. There is no backend implementation in this milest
   Navigation/cart clearing does not remove recovery for a reserved operation.
 - A matching receipt is required before claiming success. Only the submitted
   cart snapshot **and revision** are cleared; newer cart changes survive.
-  Refresh resets identities, delivery drafts, quotes, demo orders and receipts;
-  there is no durable recovery, history, tracking, cancellation or merchant
-  integration. Restaurant delivery and cash on delivery in ETB are the agreed
+  Page refresh resets identities, delivery drafts, quotes, demo orders and
+  receipts. Milestone 13 adds in-tab history, status viewing and Pending-only
+  cancellation; there is no durable recovery or merchant integration.
+  Restaurant delivery and cash on delivery in ETB are the agreed
   future model, not an operating service or payment collection in this demo.
 - Fixture controls and the checkout service/evidence are absent from production.
   Role parameters, local-storage edits and Vite configuration cannot enable a
@@ -592,3 +597,66 @@ operational distance bands and fee quotation/expiry policy (fees strictly below
 ownership checks, server-priced catalog/version checks, durable idempotency and
 order/outcome lookup, privacy/retention rules, cash reconciliation, and atomic
 acceptance/cancellation behavior. No backend or delivery-pricing formula is added.
+
+## Student demo orders (Milestone 13)
+
+- After a confirmed synthetic checkout, choose **View order progress & receipt**
+  or **View all demo orders**. Student navigation also includes **My demo orders**.
+  History and detail use the **same** `createDemoCheckoutService` instance and
+  collection as checkout, not a disconnected order seed. The original checkout
+  operation/quote/idempotency and version-aware cart-clearing safeguards remain.
+  Its confirmation receipt describes the original submission; the order-detail
+  page supplies later status and cancellation outcomes.
+- History is scoped to the current synthetic student. Reads, cancellation and
+  cancellation-result lookup also enforce that ownership inside the isolated
+  service. Another student's reference behaves like a missing order, without
+  exposing its receipt. Guests, staff, admins and unknown/loading identities do
+  not mount order components or invoke this service. Existing student orders
+  remain readable/cancellable by their owner regardless of current verification;
+  **new checkout still requires verified status**. Normal operation stays
+  guest-only with live order history unavailable. Frontend/in-memory checks are
+  demonstrations, not real authorization or backend security.
+- At submission the service records restaurant, campus, food names/images,
+  quantities and unit prices, integer-minor-unit totals, cash-on-delivery method,
+  reference and timestamp as snapshots. Later menu changes do not rewrite old
+  receipts. Optional unrecorded information is labeled missing rather than
+  invented. Recorded and last-successful-update times use Addis Ababa time.
+- The student lifecycle is **Pending → Accepted → Ready → Delivered**. Ready
+  means food is prepared, **not delivered**. Declined and Cancelled are separate
+  terminal outcomes. There is no map, invented ETA, automatic progress, courier
+  assignment, payment processing or merchant integration. The legacy merchant
+  API and **Order Ready → Done** mapping are unchanged.
+- Order-page **Refresh** and **Retry** perform reads only. Initial loading,
+  empty, missing, malformed and failed reads are distinct. Failed refreshes
+  preserve the last validated receipt/list and update timestamp; stale or
+  cross-identity responses cannot replace current data. A full browser refresh
+  resets the harness/service and all orders, personal details and cancellation
+  records. Nothing is written to local storage or delivery-detail URL fields.
+- Only Pending orders offer cancellation. The existing accessible dialog asks
+  for confirmation; duplicate clicks share one operation. The service compares
+  status/version atomically, so acceptance and cancellation cannot both win.
+  Confirmed rejection keeps the order; a stale result shows the known current
+  status. An uncertain or malformed mutation response reserves its operation
+  across route navigation and offers **Check cancellation result**, a read-only
+  lookup. Not-found/failed lookup is not proof of failure. No mutation is retried
+  automatically; a confirmed failure can be retried only by explicit review.
+- In `/tests/fixtures/roles.html`, choose **verified** and complete checkout.
+  Use **Order to simulate** with the recorded reference, then explicitly
+  simulate Accepted, Ready, Delivered or Declined and refresh the order view.
+  **Create lifecycle examples** submits six same-student lifecycle cases and
+  one other-student example through the same checkout service. Choose
+  **other-student** to check ownership. Order-read, cancellation and lookup
+  fixture selectors demonstrate loading, empty/error, stale acceptance and
+  uncertain outcomes; **Release deferred order work** releases controlled waits.
+  These privileged simulation controls are outside application pages and absent
+  from production, along with all operational fixture services and evidence.
+- The existing one-checkout-operation-per-tab session remains; the lifecycle
+  examples are test controls, not a second checkout or production data source.
+  Refresh resets the entire demonstration rather than recovering durable orders.
+
+Before real student orders, the backend must provide authenticated sessions,
+server-enforced student ownership/restaurant access, authoritative lifecycle
+transitions and trusted timestamps, durable receipt snapshots and private
+delivery-data storage/retention, atomic versioned acceptance/cancellation,
+durable idempotency and scoped outcome lookup. Delivery fees/drop-offs and
+verification policies remain undecided; this milestone supplies no backend.

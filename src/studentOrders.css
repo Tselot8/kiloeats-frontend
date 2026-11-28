@@ -1,0 +1,46 @@
+/* Student order history uses the existing light/orange working surfaces. */
+.student-order-confirmation-links { margin-bottom: var(--space-5); }
+.student-order-submission-note { margin-bottom: var(--space-5); }
+.student-order-list { display: grid; gap: var(--space-5); }
+.student-order-card { min-width: 0; padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.student-order-card-heading, .student-order-summary { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-4); }
+.student-order-card-heading > div, .student-order-summary > div { min-width: 0; flex: 1; }
+.student-order-card h3, .student-order-summary h3 { margin-bottom: 8px; overflow-wrap: anywhere; }
+.student-order-card-heading p, .student-order-summary p, .student-order-card-items { color: var(--color-muted); font-size: var(--text-sm); }
+.student-order-card-items { padding-block: var(--space-4); margin: 0; border-block: 1px solid var(--color-border); }
+.student-order-status { display: inline-block; padding: 6px 10px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--color-surface-muted); font-size: var(--text-sm); font-weight: 700; color: var(--color-text); }
+.student-order-status-pending, .student-order-status-ready { background: var(--color-accent-soft); color: var(--color-brand); }
+.student-order-status-delivered { color: var(--color-success); }
+.student-order-status-declined { background: var(--color-danger-soft); color: var(--color-danger); }
+.student-order-card-details { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-4); margin: var(--space-4) 0; }
+.student-order-card-details dt { font-size: 12px; color: var(--color-muted); }
+.student-order-card-details dd { margin: 6px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.student-order-card-details > div:first-child dd { font-weight: 700; }
+.student-order-card-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.student-order-card-footer > p { margin: 0; max-width: 65ch; color: var(--color-muted); font-size: var(--text-sm); }
+.student-order-updated, .student-order-progress { font-size: 12px; color: var(--color-muted); margin-bottom: var(--space-4); }
+.student-order-summary { margin-block: var(--space-5); }
+.student-order-timeline-section { padding-block: var(--space-4); margin-bottom: var(--space-5); border-block: 1px solid var(--color-border); }
+.student-order-timeline-section > p { font-size: var(--text-sm); }
+.student-order-timeline { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); list-style: none; padding: 0; margin: var(--space-5) 0; }
+.student-order-timeline li { position: relative; display: grid; align-content: start; gap: 6px; min-width: 0; padding: 28px 12px 0 0; border-top: 2px solid var(--color-border); font-size: 12px; color: var(--color-muted); }
+.student-order-timeline li::before { content: ''; position: absolute; left: 0; top: -7px; width: 12px; height: 12px; border: 2px solid var(--color-border); border-radius: 50%; background: var(--color-background); }
+.student-order-timeline strong { color: var(--color-text); font-size: 14px; overflow-wrap: anywhere; }
+.student-order-timeline .student-order-step-complete::before, .student-order-timeline .student-order-step-current::before { background: var(--color-brand); border-color: var(--color-brand); }
+.student-order-timeline .student-order-step-current strong { color: var(--color-brand); }
+.student-order-terminal { padding: var(--space-4); border-radius: var(--radius-sm); background: var(--color-surface-muted); }
+.student-order-terminal time { display: block; margin-top: 6px; }
+.student-order-actions { display: grid; justify-items: start; gap: var(--space-4); margin-bottom: var(--space-5); }
+.student-order-actions > p { margin: 0; }
+.student-order-reconciliation { padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
+.student-orders-page code { overflow-wrap: anywhere; white-space: normal; }
+.student-order-receipt .menu-helper { margin-bottom: 0; }
+@media (max-width:639px) {
+ .student-order-card { padding: var(--space-4); }
+ .student-order-card-details { grid-template-columns: minmax(0,1fr); gap: var(--space-3); }
+ .student-order-card-footer .button-link { width: 100%; }
+ .student-order-timeline { grid-template-columns: minmax(0,1fr); }
+ .student-order-timeline li { border-top: 0; border-left: 2px solid var(--color-border); padding: 0 0 24px 24px; margin-left: 6px; }
+ .student-order-timeline li:last-child { padding-bottom: 0; }
+ .student-order-timeline li::before { left: -7px; top: 3px; }
+}
